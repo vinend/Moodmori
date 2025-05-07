@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS favorites CASCADE;
 DROP TABLE IF EXISTS mood_logs CASCADE;
 DROP TABLE IF EXISTS moods CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS mood_comments CASCADE;
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -44,8 +45,17 @@ CREATE TABLE mood_logs (
     mood_id INTEGER REFERENCES moods(id) ON DELETE SET NULL,
     note TEXT,
     location TEXT,
+    image_url TEXT,
     is_public BOOLEAN DEFAULT FALSE,
     log_date DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE mood_comments (
+    id SERIAL PRIMARY KEY,
+    mood_log_id INTEGER REFERENCES mood_logs(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -120,3 +130,5 @@ CREATE INDEX idx_direct_messages_recipient_id ON direct_messages(recipient_id);
 CREATE INDEX idx_group_messages_group_id ON group_messages(group_id);
 CREATE INDEX idx_favorites_user_id ON favorites(user_id);
 CREATE INDEX idx_favorites_mood_log_id ON favorites(mood_log_id);
+CREATE INDEX idx_mood_comments_mood_log_id ON mood_comments(mood_log_id);
+CREATE INDEX idx_mood_comments_user_id ON mood_comments(user_id);
