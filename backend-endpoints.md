@@ -184,3 +184,27 @@ Ini bisa digunakan untuk membentuk komunitas support berdasarkan pengalaman seru
 * `GET /:groupId/messages` — Mendapatkan pesan dari grup
 
 ---
+
+### **Comment Routes** (`/api/comments`)
+
+* `GET /mood-log/:moodLogId` — Mendapatkan semua komentar untuk log mood tertentu
+* `POST /mood-log/:moodLogId` — Menambahkan komentar baru ke log mood
+* `DELETE /:commentId` — Menghapus komentar
+
+---
+
+### **Image Upload**
+
+Fitur upload gambar telah diimplementasikan untuk mood logs dengan dukungan Cloudinary:
+
+* Gambar dapat diunggah saat membuat atau mengedit mood log
+* Mendukung dua metode upload:
+  * Menggunakan form-data dengan file gambar (multipart/form-data)
+  * Menggunakan base64 encoded image data
+* Endpoint yang mendukung upload gambar:
+  * `POST /api/mood-logs` — Upload gambar saat membuat mood log baru
+  * `PUT /api/mood-logs/:id` — Upload gambar saat memperbarui mood log
+* Parameter yang digunakan:
+  * `image` — File gambar untuk form-data upload
+  * `image` — String base64 untuk encoded image upload
+  * `imageUrl` — Untuk menghapus atau mengubah URL gambar yang sudah ada
