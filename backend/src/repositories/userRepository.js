@@ -131,6 +131,20 @@ class UserRepository {
     
     return result.rows.length > 0 ? result.rows[0] : null;
   }
+
+  /**
+   * Find a user by their ID including password hash
+   * @param {number} id - User ID
+   * @returns {Promise<Object|null>} - User object with password_hash or null if not found
+   */
+  async findByIdWithPassword(id) {
+    const result = await query(
+      'SELECT id, username, email, profile_picture, password_hash FROM users WHERE id = $1',
+      [id]
+    );
+    
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
   
   /**
    * Update user information

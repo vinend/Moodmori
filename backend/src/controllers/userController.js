@@ -43,7 +43,8 @@ class UserController {
         user: {
           id: newUser.id,
           username: newUser.username,
-          email: newUser.email
+          email: newUser.email,
+          profilePicture: newUser.profile_picture || null
         }
       });
     } catch (error) {
@@ -88,7 +89,8 @@ class UserController {
         user: {
           id: user.id,
           username: user.username,
-          email: user.email
+          email: user.email,
+          profilePicture: user.profile_picture
         }
       });
     } catch (error) {
@@ -225,7 +227,7 @@ class UserController {
       }
 
       // Get user with password_hash
-      const user = await userRepository.findById(userId);
+      const user = await userRepository.findByIdWithPassword(userId);
       if (!user) {
         return responseFormatter.error(res, 'User not found', 404);
       }
