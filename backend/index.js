@@ -8,6 +8,9 @@ const authRoutes = require('./src/routes/authRoutes');
 const moodRoutes = require('./src/routes/moodRoutes');
 const moodLogRoutes = require('./src/routes/moodLogRoutes');
 const favoriteRoutes = require('./src/routes/favoriteRoutes');
+const messageRoutes = require('./src/routes/messageRoutes');
+const groupChatRoutes = require('./src/routes/groupChatRoutes');
+const commentRoutes = require('./src/routes/commentRoutes');
 
 // Import controllers to initialize data
 const moodController = require('./src/controllers/moodController');
@@ -28,7 +31,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase payload limit for base64 images
 
 // Session middleware for simple authentication
 app.use(session({
@@ -77,6 +80,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/moods', moodRoutes);
 app.use('/api/mood-logs', moodLogRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/group-chats', groupChatRoutes);
+app.use('/api/comments', commentRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

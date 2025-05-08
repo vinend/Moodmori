@@ -1,6 +1,7 @@
 const moodLogRepository = require('../repositories/moodLogRepository');
 const moodRepository = require('../repositories/moodRepository');
 const responseFormatter = require('../utils/responseFormatter');
+const { uploadImage } = require('../utils/cloudinaryUploader');
 
 /**
  * MoodLog controller for handling mood logging operations
@@ -14,7 +15,8 @@ class MoodLogController {
   async createMoodLog(req, res) {
     try {
       const userId = req.user.id;
-      const { moodId, note, logDate } = req.body;
+      const { moodId, note, logDate, isPublic, location } = req.body;
+      let imageUrl = null;
 
       // Validate required fields
       if (!moodId) {
@@ -26,13 +28,37 @@ class MoodLogController {
       if (!mood) {
         return responseFormatter.error(res, 'Invalid mood selected', 400);
       }
+      
+      // Process image upload if provided
+      if (req.file) {
+        try {
+          // Image already uploaded to Cloudinary by multer middleware
+          imageUrl = req.file.path;
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          return responseFormatter.error(res, 'Failed to upload image', 500);
+        }
+      } else if (req.body.image) {
+        // Handle base64 image if provided
+        try {
+          const base64Data = req.body.image.split(';base64,').pop();
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+          imageUrl = await uploadImage(imageBuffer);
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          return responseFormatter.error(res, 'Failed to upload image', 500);
+        }
+      }
 
       // Create mood log
       const newMoodLog = await moodLogRepository.createMoodLog(
         userId,
         moodId,
         note || null,
-        logDate || null
+        logDate || null,
+        isPublic || false,
+        location || null,
+        imageUrl
       );
 
       // Get the mood name to include in the response
@@ -123,10 +149,11 @@ class MoodLogController {
     try {
       const { id } = req.params;
       const userId = req.user.id;
-      const { moodId, note } = req.body;
+      const { moodId, note, location, isPublic } = req.body;
+      let imageUrl = undefined;
 
       // Check if at least one field is provided
-      if (!moodId && note === undefined) {
+      if (!moodId && note === undefined && location === undefined && isPublic === undefined && !req.file && !req.body.image) {
         return responseFormatter.error(res, 'No fields to update', 400);
       }
 
@@ -137,11 +164,33 @@ class MoodLogController {
           return responseFormatter.error(res, 'Invalid mood selected', 400);
         }
       }
+      
+      // Process image upload if provided
+      if (req.file) {
+        // Image already uploaded to Cloudinary by multer middleware
+        imageUrl = req.file.path;
+      } else if (req.body.image) {
+        // Handle base64 image if provided
+        try {
+          const base64Data = req.body.image.split(';base64,').pop();
+          const imageBuffer = Buffer.from(base64Data, 'base64');
+          imageUrl = await uploadImage(imageBuffer);
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          return responseFormatter.error(res, 'Failed to upload image', 500);
+        }
+      } else if (req.body.imageUrl !== undefined) {
+        // Allow explicitly setting imageUrl (including null to remove an image)
+        imageUrl = req.body.imageUrl;
+      }
 
       // Update mood log
       const updatedMoodLog = await moodLogRepository.updateMoodLog(id, userId, {
         mood_id: moodId,
-        note
+        note,
+        location,
+        is_public: isPublic,
+        image_url: imageUrl
       });
 
       if (!updatedMoodLog) {
@@ -206,6 +255,196 @@ class MoodLogController {
     } catch (error) {
       console.error('Error in getMoodStats:', error);
       responseFormatter.error(res, 'Failed to get mood statistics', 500);
+    }
+  }
+
+  /**
+   * Get mood logs that are shared as posts (publicly viewable)
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async getPublicMoodLogs(req, res) {
+    try {
+      const userId = req.user.id;
+      
+      // Parse query parameters for filtering and pagination
+      const {
+        limit = 20,
+        offset = 0,
+        sortBy = 'created_at',
+        sortOrder = 'DESC',
+        userId: filterUserId
+      } = req.query;
+
+      // Get public mood logs
+      const posts = await moodLogRepository.getPublicMoodLogs({
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        sortBy,
+        sortOrder,
+        currentUserId: userId,
+        filterUserId: filterUserId ? parseInt(filterUserId) : null
+      });
+      
+      responseFormatter.success(res, { posts });
+    } catch (error) {
+      console.error('Error in getPublicMoodLogs:', error);
+      responseFormatter.error(res, 'Failed to get public mood logs', 500);
+    }
+  }
+
+  /**
+   * Update a mood log's visibility (public/private)
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async updateMoodLogVisibility(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { isPublic } = req.body;
+      
+      if (isPublic === undefined) {
+        return responseFormatter.error(res, 'Visibility status is required', 400);
+      }
+      
+      const updatedMoodLog = await moodLogRepository.updateMoodLogVisibility(id, userId, isPublic);
+      
+      if (!updatedMoodLog) {
+        return responseFormatter.error(res, 'Mood log not found or unauthorized', 404);
+      }
+      
+      responseFormatter.success(res, {
+        message: `Mood log is now ${isPublic ? 'public' : 'private'}`,
+        moodLog: updatedMoodLog
+      });
+    } catch (error) {
+      console.error('Error in updateMoodLogVisibility:', error);
+      responseFormatter.error(res, 'Failed to update mood log visibility', 500);
+    }
+  }
+  
+  /**
+   * Add a like to a mood log
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async likeMoodLog(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Ensure the mood log exists and is public
+      const moodLog = await moodLogRepository.getMoodLogForReaction(id);
+      
+      if (!moodLog) {
+        return responseFormatter.error(res, 'Mood log not found', 404);
+      }
+      
+      if (!moodLog.is_public) {
+        return responseFormatter.error(res, 'Cannot like a private mood log', 403);
+      }
+      
+      // Can't like your own mood log
+      if (moodLog.user_id === userId) {
+        return responseFormatter.error(res, 'Cannot like your own mood log', 400);
+      }
+      
+      const result = await moodLogRepository.addReaction(id, userId, true);
+      
+      responseFormatter.success(res, {
+        message: 'Mood log liked successfully',
+        liked: result
+      });
+    } catch (error) {
+      console.error('Error in likeMoodLog:', error);
+      responseFormatter.error(res, 'Failed to like mood log', 500);
+    }
+  }
+  
+  /**
+   * Add a dislike to a mood log
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async dislikeMoodLog(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Ensure the mood log exists and is public
+      const moodLog = await moodLogRepository.getMoodLogForReaction(id);
+      
+      if (!moodLog) {
+        return responseFormatter.error(res, 'Mood log not found', 404);
+      }
+      
+      if (!moodLog.is_public) {
+        return responseFormatter.error(res, 'Cannot dislike a private mood log', 403);
+      }
+      
+      // Can't dislike your own mood log
+      if (moodLog.user_id === userId) {
+        return responseFormatter.error(res, 'Cannot dislike your own mood log', 400);
+      }
+      
+      const result = await moodLogRepository.addReaction(id, userId, false);
+      
+      responseFormatter.success(res, {
+        message: 'Mood log disliked successfully',
+        disliked: result
+      });
+    } catch (error) {
+      console.error('Error in dislikeMoodLog:', error);
+      responseFormatter.error(res, 'Failed to dislike mood log', 500);
+    }
+  }
+  
+  /**
+   * Remove a reaction from a mood log
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async removeReaction(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const removed = await moodLogRepository.removeReaction(id, userId);
+      
+      if (!removed) {
+        return responseFormatter.error(res, 'No reaction found to remove', 404);
+      }
+      
+      responseFormatter.success(res, {
+        message: 'Reaction removed successfully'
+      });
+    } catch (error) {
+      console.error('Error in removeReaction:', error);
+      responseFormatter.error(res, 'Failed to remove reaction', 500);
+    }
+  }
+  
+  /**
+   * Get public mood log by ID (for viewing a single post)
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async getPublicMoodLogById(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      const post = await moodLogRepository.getPublicMoodLogById(id, userId);
+      
+      if (!post) {
+        return responseFormatter.error(res, 'Post not found or not accessible', 404);
+      }
+      
+      responseFormatter.success(res, { post });
+    } catch (error) {
+      console.error('Error in getPublicMoodLogById:', error);
+      responseFormatter.error(res, 'Failed to get post', 500);
     }
   }
 }
