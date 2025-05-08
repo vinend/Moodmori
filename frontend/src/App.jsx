@@ -83,6 +83,16 @@ function App() {
     setCurrentTrack((prevTrack) => (prevTrack + 1) % musicTracks.length);
   };
 
+  // Handle previous track button
+  const handlePreviousTrack = () => {
+    setCurrentTrack((prevTrack) => (prevTrack - 1 + musicTracks.length) % musicTracks.length);
+  };
+
+  // Handle next track button
+  const handleNextTrack = () => {
+    setCurrentTrack((prevTrack) => (prevTrack + 1) % musicTracks.length);
+  };
+
   if (loading) {
     return <LoadingScreen />;
   }
@@ -92,7 +102,10 @@ function App() {
       <div className="min-h-screen w-full bg-white font-mono">
         <AudioPlayer 
           src={musicTracks[currentTrack]} 
-          onEnded={handleSongEnd} 
+          onEnded={handleSongEnd}
+          onPrevious={handlePreviousTrack}
+          onNext={handleNextTrack}
+          songName={musicTracks[currentTrack].split('/').pop().replace(/\.[^/.]+$/, '')}
           ref={audioRef}
         />
 
