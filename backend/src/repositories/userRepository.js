@@ -125,7 +125,7 @@ class UserRepository {
    */
   async findById(id) {
     const result = await query(
-      'SELECT id, username, email FROM users WHERE id = $1',
+      'SELECT id, username, email, profile_picture FROM users WHERE id = $1',
       [id]
     );
     
@@ -139,7 +139,7 @@ class UserRepository {
    * @returns {Promise<Object>} - Updated user object
    */
   async updateUser(id, data) {
-    const allowedFields = ['username', 'email'];
+    const allowedFields = ['username', 'email', 'profile_picture'];
     const fieldsToUpdate = Object.keys(data)
       .filter(key => allowedFields.includes(key))
       .filter(key => data[key] !== undefined);
@@ -155,7 +155,7 @@ class UserRepository {
       `UPDATE users 
        SET ${setClause} 
        WHERE id = $1 
-       RETURNING id, username, email`,
+       RETURNING id, username, email, profile_picture`,
       [id, ...values]
     );
     

@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import MoodLogPage from './pages/MoodLogPage';
 import FavoritesPage from './pages/FavoritesPage';
 import StatsPage from './pages/StatsPage';
+import SettingsPage from './pages/Settings';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Components
@@ -78,6 +79,14 @@ function App() {
     }
   };
 
+  // Update user information after profile update
+  const handleProfileUpdate = (updatedUserData) => {
+    setUser(prevUser => ({
+      ...prevUser,
+      ...updatedUserData
+    }));
+  };
+
   // Handle end of song and play next track
   const handleSongEnd = () => {
     setCurrentTrack((prevTrack) => (prevTrack + 1) % musicTracks.length);
@@ -136,6 +145,10 @@ function App() {
             <Route 
               path="/stats" 
               element={isAuthenticated ? <StatsPage user={user} /> : <Navigate to="/" />} 
+            />
+            <Route 
+              path="/settings" 
+              element={isAuthenticated ? <SettingsPage user={user} onProfileUpdate={handleProfileUpdate} /> : <Navigate to="/" />} 
             />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

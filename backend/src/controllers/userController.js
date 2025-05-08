@@ -139,7 +139,8 @@ class UserController {
         user: {
           id: user.id,
           username: user.username,
-          email: user.email
+          email: user.email,
+          profilePicture: user.profile_picture
         }
       });
     } catch (error) {
@@ -157,9 +158,15 @@ class UserController {
     try {
       const userId = req.session.userId;
       const { username, email } = req.body;
+      let profilePictureUrl = null;
+
+      // Check if a file was uploaded
+      if (req.file && req.file.path) {
+        profilePictureUrl = req.file.path;
+      }
 
       // Validate if there's anything to update
-      if (!username && !email) {
+      if (!username && !email && !profilePictureUrl) {
         return responseFormatter.error(res, 'No fields to update', 400);
       }
 
@@ -179,8 +186,14 @@ class UserController {
         }
       }
 
+      // Create update data object
+      const updateData = {};
+      if (username) updateData.username = username;
+      if (email) updateData.email = email;
+      if (profilePictureUrl) updateData.profile_picture = profilePictureUrl;
+
       // Update user
-      const updatedUser = await userRepository.updateUser(userId, { username, email });
+      const updatedUser = await userRepository.updateUser(userId, updateData);
 
       // Update session with new user info if needed
       if (username) req.session.username = username;
