@@ -273,7 +273,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   value={message} 
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 p-2 border-2 border-black text-sm"
+                  className="flex-1 p-2 border-2 border-black text-sm bg-white"
                 />
                 <button 
                   type="submit"

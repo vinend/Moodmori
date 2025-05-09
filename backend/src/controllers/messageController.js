@@ -49,12 +49,12 @@ class MessageController {
           offset: parseInt(offset) 
         }
       );
-      
-      responseFormatter.success(res, { 
+        responseFormatter.success(res, { 
         messages,
-        otherUser: {
+        user: {
           id: otherUser.id,
-          username: otherUser.username
+          username: otherUser.username,
+          profile_picture: otherUser.profile_picture
         }
       });
     } catch (error) {
@@ -62,7 +62,6 @@ class MessageController {
       responseFormatter.error(res, 'Failed to retrieve messages', 500);
     }
   }
-
   /**
    * Send a direct message to another user
    * @param {Object} req - Express request object
@@ -71,7 +70,8 @@ class MessageController {
   async sendMessage(req, res) {
     try {
       const senderId = req.user.id;
-      const { recipientId, content } = req.body;
+      const recipientId = req.params.userId; // Get recipient from URL parameter
+      const { content } = req.body;
       
       // Validate required fields
       if (!recipientId || !content) {
@@ -88,12 +88,10 @@ class MessageController {
       if (parseInt(recipientId) === senderId) {
         return responseFormatter.error(res, 'Cannot send message to yourself', 400);
       }
-      
-      const message = await messageRepository.createMessage(senderId, parseInt(recipientId), content);
-      
-      responseFormatter.success(res, {
-        message: 'Message sent successfully',
-        data: message
+        const messageData = await messageRepository.createMessage(senderId, parseInt(recipientId), content);
+        responseFormatter.success(res, {
+        status: 'Message sent successfully',
+        message: messageData
       });
     } catch (error) {
       console.error('Error in sendMessage:', error);
