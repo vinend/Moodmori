@@ -15,15 +15,16 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
   const [conversations, setConversations] = useState([]);
   const [conversationsLoading, setConversationsLoading] = useState(true);
   const [conversationsError, setConversationsError] = useState('');
-
   // States for user search
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
 
   const messagesEndRef = useRef(null);
+  const searchInputRef = useRef(null);
   
   // Fetch conversations when panel opens
   useEffect(() => {
@@ -76,9 +77,46 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
     } finally {
       setLoading(false);
     }
-  };
+  };  // Add debounced search effect
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (searchTerm.trim() && searchTerm.trim().length >= 2) {
+        searchUsers();
+      } else {
+        setSearchResults([]);
+      }
+    }, 300); // Wait 300ms after typing stops
+    
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm]);
+  
+  // Effect to handle outside clicks to close search results
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+        setIsSearchFocused(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  // Use this effect to control when search results are visible
+  useEffect(() => {
+    if (isSearchFocused && searchResults.length > 0) {
+      setIsSearchOpen(true);
+    } else if (!isSearchFocused) {
+      // Delay closing to allow for user interaction with results
+      const timer = setTimeout(() => {
+        setIsSearchOpen(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isSearchFocused, searchResults]);
+
   const searchUsers = async () => {
-    if (!searchTerm.trim()) return;
+    if (!searchTerm.trim() || searchTerm.trim().length < 2) return;
     
     try {
       setSearchLoading(true);
@@ -91,9 +129,6 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       } else {
         setSearchResults([]);
       }
-      
-      // Ensure we open search results dropdown
-      setIsSearchOpen(true);
     } catch (err) {
       console.error('Error searching users:', err);
       setSearchError('Failed to search users');
@@ -256,13 +291,14 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
             {/* Conversation List Header with Search */}
             <div className="p-2 border-b border-gray-200 bg-white">
               <div className="flex items-center">
-                <div className="relative flex-1">
-                  <input
+                <div className="relative flex-1">                  <input
+                    ref={searchInputRef}
                     type="text"
                     placeholder="Search users..."
                     className="w-full p-2 pr-8 border-2 border-black text-sm bg-white"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
                     onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
                   />
                   <button

@@ -183,6 +183,41 @@ class MessageController {
       responseFormatter.error(res, 'Failed to search users', 500);
     }
   }
+
+  /**
+   * Initialize a conversation with another user
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async initConversation(req, res) {
+    try {
+      const currentUserId = req.user.id;
+      const { userId } = req.params;
+      
+      // Check if the user exists
+      const otherUser = await userRepository.findById(parseInt(userId));
+      if (!otherUser) {
+        return responseFormatter.error(res, 'User not found', 404);
+      }
+      
+      // Can't start a conversation with yourself
+      if (parseInt(userId) === currentUserId) {
+        return responseFormatter.error(res, 'Cannot start a conversation with yourself', 400);
+      }
+      
+      responseFormatter.success(res, {
+        message: 'Conversation initialized',
+        user: {
+          id: otherUser.id,
+          username: otherUser.username,
+          profile_picture: otherUser.profile_picture
+        }
+      });
+    } catch (error) {
+      console.error('Error in initConversation:', error);
+      responseFormatter.error(res, 'Failed to initialize conversation', 500);
+    }
+  }
 }
 
 module.exports = new MessageController();
