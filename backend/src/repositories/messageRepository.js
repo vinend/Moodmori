@@ -118,8 +118,7 @@ class MessageRepository {
    * @param {number} messageId - ID of the message
    * @param {number} userId - ID of the recipient user
    * @returns {boolean} True if message was marked as read, false otherwise
-   */
-  async markMessageAsRead(messageId, userId) {
+   */  async markMessageAsRead(messageId, userId) {
     try {
       const result = await db.query(
         `UPDATE direct_messages

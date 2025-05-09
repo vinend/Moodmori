@@ -192,6 +192,20 @@ class UserRepository {
     
     return result.rowCount > 0;
   }
+  /**
+   * Search users by username
+   * @param {string} searchTerm - Term to search for in usernames
+   * @returns {Promise<Array>} - List of matching users
+   */
+  async searchUsers(searchTerm) {
+    const result = await require('../database/connection').query(
+      'SELECT id, username, email, profile_picture FROM users WHERE username ILIKE $1 LIMIT 10',
+      [`%${searchTerm}%`]
+    );
+    
+    return result.rows;
+  }
+  
 }
 
 module.exports = new UserRepository();

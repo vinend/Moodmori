@@ -8,6 +8,8 @@ const router = express.Router();
  * Direct Message routes
  */
 
+// Get user details for a specific user
+
 // Get conversations for current user
 router.get('/conversations', authenticate, messageController.getConversations);
 

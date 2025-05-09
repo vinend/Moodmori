@@ -125,6 +125,64 @@ class MessageController {
       responseFormatter.error(res, 'Failed to mark message as read', 500);
     }
   }
+
+  async findByUsername(req, res) {
+    try {
+      const { username } = req.params;
+
+      // Validate required fields
+      if (!username) {
+        return responseFormatter.error(res, 'Username is required', 400);
+      }
+
+      // Find user by username
+      const user = await userRepository.findByUsername(username);
+      if (!user) {
+        return responseFormatter.error(res, 'User not found', 404);
+      }
+
+      responseFormatter.success(res, {
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          profilePicture: user.profile_picture
+        }
+      });
+    } catch (error) {
+      console.error('Error in findByUsername:', error);
+      responseFormatter.error(res, 'Failed to find user by username', 500);
+    }
+  }
+
+  /**
+   * Search users by username
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async searchUsers(req, res) {
+    try {
+      const { query } = req.params;
+      
+      if (!query || query.trim().length < 2) {
+        return responseFormatter.error(res, 'Search query must be at least 2 characters', 400);
+      }
+      
+      const users = await userRepository.searchUsers(query);
+      
+      // Filter out sensitive information
+      const safeUsers = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        profile_picture: user.profile_picture
+      }));
+      
+      responseFormatter.success(res, { users: safeUsers });
+    } catch (error) {
+      console.error('Error in searchUsers:', error);
+      responseFormatter.error(res, 'Failed to search users', 500);
+    }
+  }
 }
 
 module.exports = new MessageController();

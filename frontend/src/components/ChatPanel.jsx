@@ -77,15 +77,14 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       setLoading(false);
     }
   };
-
   const searchUsers = async () => {
     if (!searchTerm.trim()) return;
     
     try {
       setSearchLoading(true);
       setSearchError('');
-      // Fix the API endpoint path to match the backend route
-      const response = await api.get(`/api/auth/search?term=${encodeURIComponent(searchTerm)}`);
+      // Use the correct API endpoint path with the route parameter
+      const response = await api.get(`/api/auth/search/${encodeURIComponent(searchTerm)}`);
       
       if (response.data && response.data.users) {
         setSearchResults(response.data.users.filter(u => u.id !== user?.id));
@@ -261,7 +260,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   <input
                     type="text"
                     placeholder="Search users..."
-                    className="w-full p-2 pr-8 border-2 border-black text-sm"
+                    className="w-full p-2 pr-8 border-2 border-black text-sm bg-white"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && searchUsers()}

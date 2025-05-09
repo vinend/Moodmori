@@ -1,5 +1,6 @@
 const express = require('express');
 const userController = require('../controllers/userController');
+const messageController = require('../controllers/messageController');
 const authenticate = require('../utils/authMiddleware');
 const { imageUploader } = require('../utils/cloudinaryUploader');
 
@@ -26,5 +27,8 @@ router.put('/profile', authenticate, imageUploader.single('profilePicture'), use
 
 // Update user password (protected route)
 router.put('/password', authenticate, userController.updatePassword);
+
+// Search for users (protected route)
+router.get('/search/:query', authenticate, messageController.searchUsers);
 
 module.exports = router;
