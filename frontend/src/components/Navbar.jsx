@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaHome, FaBook, FaStar, FaChartBar, FaSignOutAlt, FaCog, FaUser } from 'react-icons/fa';
+import { FaHome, FaBook, FaStar, FaChartBar, FaSignOutAlt, FaCog, FaUser, FaComment } from 'react-icons/fa';
 
-const Navbar = ({ user, onLogout }) => {
+const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
   return (
     <nav className="bg-white border-b-2 border-black px-4 py-3">
       <div className="flex flex-col sm:flex-row items-center justify-between">
@@ -26,6 +26,15 @@ const Navbar = ({ user, onLogout }) => {
             <h1 className="font-mono font-bold text-xl uppercase tracking-wider text-black">MOOD MORI</h1>
             <p className="text-xs font-mono text-gray-600">{user?.username || 'Unknown User'}</p>
           </div>
+          
+          {/* Messages Icon */}
+          <button 
+            onClick={onChatToggle}
+            className={`ml-4 p-2 rounded-full ${isChatOpen ? 'bg-gray-200' : ''}`}
+            title="Toggle Messages"
+          >
+            <FaComment className={`text-lg ${isChatOpen ? 'text-black' : 'text-gray-600'}`} />
+          </button>
         </div>
         
         <div className="flex items-center space-x-4 font-mono">
