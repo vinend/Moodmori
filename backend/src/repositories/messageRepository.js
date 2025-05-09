@@ -76,27 +76,42 @@ class MessageRepository {
       throw error;
     }
   }
-
   /**
    * Get messages between two users
    * @param {number} userId1 - ID of the first user
    * @param {number} userId2 - ID of the second user
    * @param {Object} options - Pagination options
+   * @param {number} options.after - Fetch only messages after this ID
    * @returns {Array} List of messages
    */
-  async getConversationMessages(userId1, userId2, options = { limit: 50, offset: 0 }) {
+  async getConversationMessages(userId1, userId2, options = { limit: 50, offset: 0, after: null }) {
     try {
-      const result = await db.query(
-        `SELECT 
-           dm.*
-         FROM direct_messages dm
-         WHERE 
-           (sender_id = $1 AND recipient_id = $2) OR
-           (sender_id = $2 AND recipient_id = $1)
-         ORDER BY created_at DESC
-         LIMIT $3 OFFSET $4`,
-        [userId1, userId2, options.limit, options.offset]
-      );
+      let query, params;
+        // If we're fetching only new messages after a specific ID
+      if (options.after) {
+        query = `
+          SELECT DISTINCT ON (id) dm.*
+          FROM direct_messages dm
+          WHERE 
+            ((sender_id = $1 AND recipient_id = $2) OR
+            (sender_id = $2 AND recipient_id = $1))
+            AND id > $3
+          ORDER BY id, created_at ASC`;
+        params = [userId1, userId2, options.after];
+      } else {
+        // Standard pagination query
+        query = `
+          SELECT dm.*
+          FROM direct_messages dm
+          WHERE 
+            (sender_id = $1 AND recipient_id = $2) OR
+            (sender_id = $2 AND recipient_id = $1)
+          ORDER BY created_at DESC
+          LIMIT $3 OFFSET $4`;
+        params = [userId1, userId2, options.limit, options.offset];
+      }
+      
+      const result = await db.query(query, params);
       
       // Mark unread messages as read if recipient is the current user
       await db.query(

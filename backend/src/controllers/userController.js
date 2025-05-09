@@ -250,34 +250,6 @@ class UserController {
     }
   }
 
-  async findByUsername(req, res) {
-    try {
-      const { username } = req.params;
-
-      // Validate required fields
-      if (!username) {
-        return responseFormatter.error(res, 'Username is required', 400);
-      }
-
-      // Find user by username
-      const user = await userRepository.findByUsername(username);
-      if (!user) {
-        return responseFormatter.error(res, 'User not found', 404);
-      }
-
-      responseFormatter.success(res, {
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          profilePicture: user.profile_picture
-        }
-      });
-    } catch (error) {
-      console.error('Error in findByUsername:', error);
-      responseFormatter.error(res, 'Failed to find user by username', 500);
-    }
-  }
 }
 
 module.exports = new UserController();

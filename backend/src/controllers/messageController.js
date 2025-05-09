@@ -28,12 +28,11 @@ class MessageController {
    * Get messages in a conversation with a specific user
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
-   */
-  async getConversation(req, res) {
+   */  async getConversation(req, res) {
     try {
       const currentUserId = req.user.id;
       const { userId } = req.params;
-      const { limit = 50, offset = 0 } = req.query;
+      const { limit = 50, offset = 0, after } = req.query;
       
       // Validate that the other user exists
       const otherUser = await userRepository.findById(userId);
@@ -41,13 +40,20 @@ class MessageController {
         return responseFormatter.error(res, 'User not found', 404);
       }
       
+      const options = { 
+        limit: parseInt(limit), 
+        offset: parseInt(offset)
+      };
+      
+      // If "after" parameter is provided, we'll fetch only messages after a certain ID
+      if (after) {
+        options.after = parseInt(after);
+      }
+      
       const messages = await messageRepository.getConversationMessages(
         currentUserId, 
         parseInt(userId),
-        { 
-          limit: parseInt(limit), 
-          offset: parseInt(offset) 
-        }
+        options
       );
         responseFormatter.success(res, { 
         messages,

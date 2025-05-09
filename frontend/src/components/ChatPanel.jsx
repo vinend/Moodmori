@@ -10,6 +10,8 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
   const [chatUser, setChatUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lastMessageId, setLastMessageId] = useState(null);
+  const pollingInterval = useRef(null);
 
   // States for conversations list
   const [conversations, setConversations] = useState([]);
@@ -32,15 +34,23 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       fetchConversations();
     }
   }, [isOpen]);
-
   // Fetch messages when active chat changes
   useEffect(() => {
     if (activeChat) {
       fetchMessages(activeChat);
+      
+      // Start polling for new messages
+      startMessagePolling(activeChat);
     } else {
       setMessages([]);
       setChatUser(null);
+      stopMessagePolling();
     }
+    
+    // Cleanup on unmount
+    return () => {
+      stopMessagePolling();
+    };
   }, [activeChat]);
 
   // Scroll to bottom of messages
@@ -49,6 +59,71 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+    // Start real-time message polling
+  const startMessagePolling = (userId) => {
+    // Clear any existing interval
+    stopMessagePolling();
+    
+    // Check for messages immediately on start
+    checkForNewMessages(userId);
+    
+    // Set up new polling interval - check every 2 seconds for faster real-time updates
+    pollingInterval.current = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        checkForNewMessages(userId);
+      }
+    }, 2000);
+  };
+  
+  // Stop polling
+  const stopMessagePolling = () => {
+    if (pollingInterval.current) {
+      clearInterval(pollingInterval.current);
+      pollingInterval.current = null;
+    }
+  };
+    // Check for new messages since last check
+  const checkForNewMessages = async (userId) => {
+    try {
+      let url = `/api/messages/${userId}`;
+      if (lastMessageId) {
+        url += `?after=${lastMessageId}`;
+      }
+      
+      const response = await api.get(url);
+      
+      if (response.data && response.data.messages && response.data.messages.length > 0) {
+        // Filter out any messages we already have to prevent duplication
+        setMessages(prevMessages => {
+          // Create a set of existing message IDs for quick lookup
+          const existingIds = new Set(prevMessages.map(msg => msg.id));
+          
+          // Filter out any messages that already exist in our state
+          const uniqueNewMessages = response.data.messages.filter(
+            msg => !existingIds.has(msg.id) && msg.id !== 'temp-' + Date.now()
+          );
+          
+          // Only add messages that don't already exist
+          if (uniqueNewMessages.length > 0) {
+            return [...prevMessages, ...uniqueNewMessages];
+          }
+          return prevMessages;
+        });
+        
+        // Update last message ID for next poll
+        const newLastMessageId = response.data.messages[response.data.messages.length - 1].id;
+        setLastMessageId(newLastMessageId);
+        
+        // If this is a new message from the other user, mark it as read
+        const newMessages = response.data.messages.filter(msg => !msg.is_read && msg.sender_id !== user?.id);
+        if (newMessages.length > 0) {
+          markMessagesAsRead(newMessages.map(msg => msg.id));
+        }
+      }
+    } catch (error) {
+      console.error("Error polling for new messages:", error);
+    }
+  };
 
   const fetchConversations = async () => {
     try {
@@ -62,22 +137,47 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
     } finally {
       setConversationsLoading(false);
     }
-  };
-
-  const fetchMessages = async (userId) => {
+  };  const fetchMessages = async (userId) => {
     try {
       setLoading(true);
       setError('');
       const response = await api.get(`/api/messages/${userId}`);
-      setMessages(response.data.messages || []);
+      
+      const messagesList = response.data.messages || [];
+      
+      // Remove any duplicate messages by ID
+      const uniqueMessages = [];
+      const messageIds = new Set();
+      
+      messagesList.forEach(msg => {
+        if (!messageIds.has(msg.id)) {
+          messageIds.add(msg.id);
+          uniqueMessages.push(msg);
+        }
+      });
+      
+      setMessages(uniqueMessages);
       setChatUser(response.data.user);
+      
+      // Update last message id for polling
+      if (uniqueMessages.length > 0) {
+        setLastMessageId(uniqueMessages[uniqueMessages.length - 1].id);
+        
+        // Mark messages as read
+        const unreadMessages = uniqueMessages.filter(msg => !msg.is_read && msg.sender_id !== user?.id);
+        if (unreadMessages.length > 0) {
+          markMessagesAsRead(unreadMessages.map(msg => msg.id));
+        }
+      } else {
+        setLastMessageId(null);
+      }
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError('Failed to load messages');
     } finally {
       setLoading(false);
     }
-  };  // Add debounced search effect
+  };// Add debounced search effect
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (searchTerm.trim() && searchTerm.trim().length >= 2) {
@@ -136,32 +236,58 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
     } finally {
       setSearchLoading(false);
     }
-  };
-
-  const handleSubmit = async (e) => {
+  };  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!message.trim() || !activeChat) return;
     
+    // Create a temporary message for optimistic UI update
+    const tempMessage = {
+      id: `temp-${Date.now()}`,
+      sender_id: user?.id,
+      recipient_id: activeChat,
+      content: message,
+      created_at: new Date().toISOString(),
+      is_read: false,
+      isTemp: true
+    };
+    
+    // Clear input field immediately for better UX
+    const msgContent = message;
+    setMessage('');
+    
+    // Optimistically add to message list
+    setMessages(prevMessages => [...prevMessages, tempMessage]);
+    
     try {
-      const response = await api.post(`/api/messages/${activeChat}`, { content: message });
+      const response = await api.post(`/api/messages/${activeChat}`, { content: msgContent });
       
       if (response.data && response.data.message) {
-        // Add the new message to the list
-        setMessages(prevMessages => [...prevMessages, response.data.message]);
-        // Clear the input field after successful send
-        setMessage('');
+        // Replace temporary message with the real one from server
+        setMessages(prevMessages => prevMessages.map(msg => 
+          msg.id === tempMessage.id ? response.data.message : msg
+        ));
+        
+        // Update last message ID for polling
+        setLastMessageId(response.data.message.id);
+        
+        // Refresh conversations list to show latest message
+        fetchConversations();
       }
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
+      
+      // Remove the temporary message on error
+      setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempMessage.id));
+      // Put the message back in the input
+      setMessage(msgContent);
     }
   };
 
   const handleSelectChat = (userId) => {
     setActiveChat(userId);
   };
-
   const handleSelectUser = async (userId) => {
     try {
       // First make sure we have info about this user by initializing the conversation
@@ -178,6 +304,29 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
     } catch (err) {
       console.error('Error starting conversation:', err);
       setError('Failed to start conversation');
+    }
+  };
+  
+  // Function to mark messages as read
+  const markMessagesAsRead = async (messageIds) => {
+    if (!messageIds || messageIds.length === 0) return;
+    
+    try {
+      // For each message ID, make a request to mark it as read
+      const promises = messageIds.map(messageId => 
+        api.put(`/api/messages/read/${messageId}`)
+      );
+      
+      await Promise.all(promises);
+      
+      // Update the messages in state to show as read
+      setMessages(prevMessages => 
+        prevMessages.map(msg => 
+          messageIds.includes(msg.id) ? { ...msg, is_read: true } : msg
+        )
+      );
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
     }
   };
 
@@ -244,8 +393,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   <p className="text-sm text-gray-500">This is the beginning of your conversation</p>
                 </div>
               ) : (
-                <>
-                  {messages.map(msg => (
+                <>                  {messages.map(msg => (
                     <div
                       key={msg.id || `temp-${Date.now()}-${Math.random()}`}
                       className={`max-w-[90%] p-2 rounded-lg ${
@@ -255,9 +403,20 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                       }`}
                     >
                       <p className="text-sm">{msg.content}</p>
-                      <span className="text-xs block mt-1 opacity-70">
-                        {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'sending...'}
-                      </span>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs opacity-70">
+                          {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'sending...'}
+                        </span>
+                        {msg.sender_id === user?.id && (
+                          <span className="ml-1 text-xs">
+                            {msg.is_read ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : null}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                   <div ref={messagesEndRef} />
