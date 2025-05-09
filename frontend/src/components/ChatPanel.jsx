@@ -151,7 +151,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed left-0 top-[64px] bottom-0 w-64 bg-white border-r-2 border-black shadow-lg z-30 flex flex-col font-mono transition-transform duration-300 transform-gpu">
+    <div className={`fixed left-0 top-[64px] bottom-0 w-64 bg-white border-r-2 border-black shadow-lg z-30 flex flex-col font-mono transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Panel Header */}
       <div className="p-3 border-b-2 border-black flex items-center justify-between bg-white sticky top-0">
         <h2 className="font-bold text-lg">MESSAGES</h2>
