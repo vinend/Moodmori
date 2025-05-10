@@ -279,13 +279,11 @@ class GroupChatController {
       if (!isMember) {
         return responseFormatter.error(res, 'You are not a member of this group', 403);
       }
-      
-      // Send the message
-      const message = await groupChatRepository.createGroupMessage(groupId, senderId, content);
+        // Send the message
+      const messageData = await groupChatRepository.createGroupMessage(groupId, senderId, content);
       
       responseFormatter.success(res, {
-        message: 'Message sent successfully',
-        data: message
+        message: messageData
       });
     } catch (error) {
       console.error('Error in sendGroupMessage:', error);

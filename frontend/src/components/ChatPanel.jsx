@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaChevronRight, FaUser, FaComment, FaSearch, FaPlus, FaTimes, FaUsers } from 'react-icons/fa';
 import api from '../api/axiosConfig';
 
-const ChatPanel = ({ isOpen, onClose, user }) => {  // States for panel management
+const ChatPanel = ({ isOpen, onClose, user }) => {  
+  // States for panel management
   const [activeChat, setActiveChat] = useState(null);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
@@ -445,25 +446,23 @@ const ChatPanel = ({ isOpen, onClose, user }) => {  // States for panel manageme
       setError('Group name and at least 2 members are required');
       return;
     }
-    
-    try {
+      try {
       const response = await api.post('/api/group-chats', {
         name: groupName,
-        members: selectedUsers
+        memberIds: selectedUsers
       });
       
-      if (response.data && response.data.groupChat) {
+      if (response.data && response.data.group) {
         // Reset states
         setGroupName('');
         setSelectedUsers([]);
         setIsCreatingGroup(false);
-        
-        // Open the new group chat
-        setActiveChat(response.data.groupChat.id);
+          // Open the new group chat
+        setActiveChat(response.data.group.id);
         setIsGroup(true);
         
         // Fetch group chat messages
-        fetchGroupMessages(response.data.groupChat.id);
+        fetchGroupMessages(response.data.group.id);
         
         // Refresh conversation list
         fetchConversations();
@@ -473,27 +472,30 @@ const ChatPanel = ({ isOpen, onClose, user }) => {  // States for panel manageme
       setError('Failed to create group chat. Please try again.');
     }
   };
-  
-  // Function to fetch group chat messages
+    // Function to fetch group chat messages
   const fetchGroupMessages = async (groupId) => {
     try {
       setLoading(true);
       setError('');
       
-      const response = await api.get(`/api/group-chats/${groupId}/messages`);
+      // First, get the group details
+      const groupResponse = await api.get(`/api/group-chats/${groupId}`);
       
-      if (response.data) {
-        setMessages(response.data.messages || []);
+      // Then get the messages
+      const messagesResponse = await api.get(`/api/group-chats/${groupId}/messages`);
+      
+      if (messagesResponse.data && groupResponse.data) {
+        setMessages(messagesResponse.data.messages || []);
         setChatUser({
-          id: response.data.groupChat.id,
-          username: response.data.groupChat.name,
+          id: groupResponse.data.group.id,
+          username: groupResponse.data.group.name,
           isGroup: true,
-          members: response.data.groupChat.members
+          members: groupResponse.data.members || []
         });
         
         // Update last message id for polling
-        if (response.data.messages && response.data.messages.length > 0) {
-          setLastMessageId(response.data.messages[response.data.messages.length - 1].id);
+        if (messagesResponse.data.messages && messagesResponse.data.messages.length > 0) {
+          setLastMessageId(messagesResponse.data.messages[messagesResponse.data.messages.length - 1].id);
         } else {
           setLastMessageId(null);
         }
