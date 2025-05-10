@@ -19,6 +19,8 @@ const ChatPanel = ({ isOpen, onClose, user }) => {  // States for panel manageme
   const [groupName, setGroupName] = useState('');
   const [allUsers, setAllUsers] = useState([]);
   const [loadingAllUsers, setLoadingAllUsers] = useState(false);
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
+  const [filteredMembers, setFilteredMembers] = useState([]);
 
   // States for conversations list
   const [conversations, setConversations] = useState([]);
@@ -266,6 +268,20 @@ const ChatPanel = ({ isOpen, onClose, user }) => {  // States for panel manageme
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
   
+  // Use this effect to filter members based on search term
+  useEffect(() => {
+    if (allUsers.length > 0) {
+      if (memberSearchTerm.trim() === '') {
+        setFilteredMembers(allUsers);
+      } else {
+        const filtered = allUsers.filter(user => 
+          user.username.toLowerCase().includes(memberSearchTerm.toLowerCase())
+        );
+        setFilteredMembers(filtered);
+      }
+    }
+  }, [memberSearchTerm, allUsers]);
+  
   // Effect to handle outside clicks to close search results
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -312,20 +328,22 @@ const ChatPanel = ({ isOpen, onClose, user }) => {  // States for panel manageme
       setSearchLoading(false);
     }
   };
-  
-  // Fetch all users for group creation
+    // Fetch all users for group creation
   const fetchAllUsers = async () => {
     try {
       setLoadingAllUsers(true);
       const response = await api.get('/api/auth/users');
       
       if (response.data && response.data.users) {
-        setAllUsers(response.data.users.filter(u => u.id !== user?.id));
+        const usersList = response.data.users.filter(u => u.id !== user?.id);
+        setAllUsers(usersList);
+        setFilteredMembers(usersList);
       }
     } catch (err) {
       console.error('Error fetching all users:', err);
     } finally {
-      setLoadingAllUsers(false);    }
+      setLoadingAllUsers(false);
+    }
   };
   
   const handleSubmit= async (e) => {
@@ -747,8 +765,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {  // States for panel manageme
                   onChange={(e) => setGroupName(e.target.value)}
                   className="p-2 mb-4 border-2 border-black"
                 />
-                
-                <div className="mb-3">
+                  <div className="mb-3">
                   <h4 className="font-bold mb-2">Selected Members ({selectedUsers.length})</h4>
                   <div className="flex flex-wrap gap-1 mb-2">
                     {selectedUsers.length > 0 ? (
@@ -759,9 +776,21 @@ const ChatPanel = ({ isOpen, onClose, user }) => {  // States for panel manageme
                             key={userId} 
                             className="bg-black text-white px-2 py-1 rounded-full text-xs flex items-center"
                           >
+                            {user.profile_picture && (
+                              <div className="w-4 h-4 rounded-full overflow-hidden mr-1 flex-shrink-0">
+                                <img 
+                                  src={user.profile_picture} 
+                                  alt={user.username}
+                                  className="w-full h-full object-cover" 
+                                />
+                              </div>
+                            )}
                             <span className="truncate max-w-[80px]">{user.username}</span>
                             <button 
-                              onClick={() => toggleUserSelection(userId)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleUserSelection(userId);
+                              }}
                               className="ml-1"
                             >
                               <FaTimes size={10} />
@@ -776,16 +805,41 @@ const ChatPanel = ({ isOpen, onClose, user }) => {  // States for panel manageme
                 </div>
                 
                 <div className="flex-1 overflow-y-auto">
-                  <h4 className="font-bold mb-2">Select Members</h4>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-bold">Select Members</h4>
+                    <span className="text-xs text-gray-500">{filteredMembers.length} users</span>
+                  </div>
+                  
+                  {/* Search bar for members */}
+                  <div className="relative mb-3">
+                    <input
+                      type="text"
+                      placeholder="Search members..."
+                      value={memberSearchTerm}
+                      onChange={(e) => setMemberSearchTerm(e.target.value)}
+                      className="w-full p-2 pr-8 border-2 border-black text-sm bg-white"
+                    />
+                    {memberSearchTerm && (
+                      <button
+                        onClick={() => setMemberSearchTerm('')}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                      >
+                        <FaTimes className="text-gray-500" size={12} />
+                      </button>
+                    )}
+                  </div>
+                  
                   {loadingAllUsers ? (
                     <div className="flex justify-center items-center h-20">
                       <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                  ) : allUsers.length === 0 ? (
-                    <p className="text-sm text-gray-500">No users found</p>
+                  ) : filteredMembers.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      {allUsers.length === 0 ? "No users found" : "No matching users found"}
+                    </p>
                   ) : (
                     <div className="space-y-2">
-                      {allUsers.map(user => (
+                      {filteredMembers.map(user => (
                         <div
                           key={user.id}
                           className={`flex items-center p-2 border border-gray-200 rounded cursor-pointer ${
