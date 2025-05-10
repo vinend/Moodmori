@@ -35,7 +35,7 @@ const DashboardPage = ({ user }) => {
 
       // Ambil mood logs yang bersifat publik
       const socialResponse = await api.get("/api/mood-logs/public");
-      setSocialFeed(socialResponse.data.moodLogs); // Menyimpan data mood log publik
+      setSocialFeed(socialResponse.data.moodLogs);
     } catch (err) {
       console.error("Dashboard data fetch error:", err);
       setError("Failed to load dashboard data. Please try again later.");
