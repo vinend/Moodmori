@@ -31,4 +31,7 @@ router.put('/password', authenticate, userController.updatePassword);
 // Search for users (protected route)
 router.get('/search/:query', authenticate, messageController.searchUsers);
 
+// Get all users (protected route)
+router.get('/users', authenticate, userController.getAllUsers);
+
 module.exports = router;

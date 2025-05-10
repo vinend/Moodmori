@@ -250,6 +250,32 @@ class UserController {
     }
   }
 
+  /**
+   * Get all users for group chat creation
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async getAllUsers(req, res) {
+    try {
+      const currentUserId = req.user.id;
+      
+      // Get all users except the current user
+      const users = await userRepository.getAllUsers();
+      
+      // Filter out sensitive information
+      const filteredUsers = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        profile_picture: user.profile_picture || null
+      }));
+      
+      responseFormatter.success(res, { users: filteredUsers });
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      responseFormatter.error(res, 'Failed to retrieve users', 500);
+    }
+  }
+
 }
 
 module.exports = new UserController();

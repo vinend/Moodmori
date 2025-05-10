@@ -149,6 +149,49 @@ class MessageRepository {
       throw error;
     }
   }
+  /**
+   * Get all read messages from a list of message IDs
+   * @param {Array} messageIds - Array of message IDs to check
+   * @returns {Array} List of read messages
+   */
+  async getReadMessages(messageIds) {
+    try {
+      const result = await db.query(
+        `SELECT id
+         FROM direct_messages
+         WHERE id = ANY($1) AND is_read = true`,
+        [messageIds]
+      );
+      
+      return result.rows;
+    } catch (error) {
+      console.error('Error in getReadMessages:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Mark all unread messages from a specific sender to a recipient as read
+   * @param {number} recipientId - ID of the recipient user
+   * @param {number} senderId - ID of the sender user
+   * @returns {Array} List of message IDs that were marked as read
+   */
+  async markAllMessagesAsRead(recipientId, senderId) {
+    try {
+      const result = await db.query(
+        `UPDATE direct_messages
+         SET is_read = true
+         WHERE recipient_id = $1 AND sender_id = $2 AND is_read = false
+         RETURNING id`,
+        [recipientId, senderId]
+      );
+      
+      return result.rows;
+    } catch (error) {
+      console.error('Error in markAllMessagesAsRead:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new MessageRepository();

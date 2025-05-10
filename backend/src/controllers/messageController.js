@@ -55,8 +55,24 @@ class MessageController {
         parseInt(userId),
         options
       );
-        responseFormatter.success(res, { 
-        messages,
+      
+      // Mark all messages from the other user as read
+      // This ensures when two users are both online, messages are marked as read immediately
+      const markedMessages = await messageRepository.markAllMessagesAsRead(currentUserId, parseInt(userId));
+      
+      // Update the read status for any messages that were just marked as read
+      const markedIds = new Set(markedMessages.map(msg => msg.id));
+      
+      // Update the read status in the returned messages
+      const updatedMessages = messages.map(msg => {
+        if (markedIds.has(msg.id)) {
+          return { ...msg, is_read: true };
+        }
+        return msg;
+      });
+      
+      responseFormatter.success(res, { 
+        messages: updatedMessages,
         user: {
           id: otherUser.id,
           username: otherUser.username,
@@ -192,8 +208,7 @@ class MessageController {
    * Initialize a conversation with another user
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
-   */
-  async initConversation(req, res) {
+   */  async initConversation(req, res) {
     try {
       const currentUserId = req.user.id;
       const { userId } = req.params;
@@ -220,6 +235,36 @@ class MessageController {
     } catch (error) {
       console.error('Error in initConversation:', error);
       responseFormatter.error(res, 'Failed to initialize conversation', 500);
+    }
+  }
+  /**
+   * Check read status for multiple messages
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async checkReadStatus(req, res) {
+    try {
+      const currentUserId = req.user.id;
+      const { userId } = req.params;
+      const { messageIds } = req.body;
+      
+      if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+        return responseFormatter.error(res, 'Valid message IDs array is required', 400);
+      }
+      
+      // First mark all unread messages from this user as read (happens when both are online)
+      await messageRepository.markAllMessagesAsRead(currentUserId, parseInt(userId));
+      
+      // Get all read messages from the list
+      const readMessagesResult = await messageRepository.getReadMessages(messageIds);
+      
+      // Extract just the IDs of messages that have been read
+      const readMessageIds = readMessagesResult.map(msg => msg.id);
+      
+      responseFormatter.success(res, { readMessageIds });
+    } catch (error) {
+      console.error('Error in checkReadStatus:', error);
+      responseFormatter.error(res, 'Failed to check read status', 500);
     }
   }
 }

@@ -191,7 +191,9 @@ class UserRepository {
     );
     
     return result.rowCount > 0;
-  }  /**
+  }  
+  
+  /**
    * Search users by username
    * @param {string} searchTerm - Term to search for in usernames
    * @returns {Promise<Array>} - List of matching users
@@ -200,6 +202,18 @@ class UserRepository {
     const result = await query(
       'SELECT id, username, email, profile_picture FROM users WHERE username ILIKE $1 LIMIT 10',
       [`%${searchTerm}%`]
+    );
+    
+    return result.rows;
+  }
+  
+  /**
+   * Get all users
+   * @returns {Promise<Array>} - List of all users
+   */
+  async getAllUsers() {
+    const result = await query(
+      'SELECT id, username, profile_picture FROM users ORDER BY username'
     );
     
     return result.rows;

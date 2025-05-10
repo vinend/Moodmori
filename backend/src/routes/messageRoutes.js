@@ -25,4 +25,7 @@ router.post('/:userId', authenticate, messageController.sendMessage);
 // Mark message as read
 router.put('/read/:messageId', authenticate, messageController.markAsRead);
 
+// Check read status for multiple messages
+router.post('/:userId/read-status', authenticate, messageController.checkReadStatus);
+
 module.exports = router;
