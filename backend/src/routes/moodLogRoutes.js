@@ -18,6 +18,7 @@ router.get('/stats', authenticate, moodLogController.getMoodStats);
 router.post('/', authenticate, moodLogController.createMoodLog);
 
 // Get a specific mood log by ID
+router.get('/public', moodLogController.getPublicMoodLogs);
 router.get('/:id', authenticate, moodLogController.getMoodLogById);
 
 // Update a mood log
@@ -26,6 +27,5 @@ router.put('/:id', authenticate, moodLogController.updateMoodLog);
 // Delete a mood log
 router.delete('/:id', authenticate, moodLogController.deleteMoodLog);
 
-router.get('/public', moodLogController.getPublicMoodLogs);
 
 module.exports = router;

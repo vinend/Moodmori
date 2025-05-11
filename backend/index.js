@@ -77,6 +77,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/moods', moodRoutes);
 app.use('/api/mood-logs', moodLogRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/mood-logs', moodLogRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

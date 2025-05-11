@@ -191,9 +191,9 @@ class MoodLogRepository {
       SELECT 
         ml.id,
         ml.user_id,
-        u.name AS user_name,
+        u.username AS user_name,  -- Gantilah 'u.name' menjadi 'u.username' atau sesuai dengan nama kolom di tabel 'users'
         ml.mood_id,
-        m.name AS mood_name,
+        m.mood_name AS mood_name,  -- Sesuaikan nama kolom mood_name di tabel 'moods'
         m.icon AS mood_icon,
         ml.log_date,
         ml.note,
@@ -203,15 +203,21 @@ class MoodLogRepository {
       JOIN moods m ON ml.mood_id = m.id
       WHERE ml.is_public = TRUE
       ORDER BY ml.log_date DESC
-      LIMIT 20
     `);
+
+    // Pastikan result.rows tidak kosong
+    if (result.rows.length === 0) {
+      console.warn('No public mood logs found.');
+    }
 
     return result.rows;
   } catch (error) {
-    console.error('Error in getPublicMoodLogs:', error);
-    throw error;
+    console.error('Error in getPublicMoodLogs:', error.message); 
+    throw new Error('Failed to retrieve public mood logs');
   }
 }
+
+
 
 
 }
