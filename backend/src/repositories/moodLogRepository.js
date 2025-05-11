@@ -191,9 +191,9 @@ class MoodLogRepository {
       SELECT 
         ml.id,
         ml.user_id,
-        u.username AS user_name,  -- Gantilah 'u.name' menjadi 'u.username' atau sesuai dengan nama kolom di tabel 'users'
+        u.username AS user_name,  
         ml.mood_id,
-        m.mood_name AS mood_name,  -- Sesuaikan nama kolom mood_name di tabel 'moods'
+        m.mood_name AS mood_name,
         m.icon AS mood_icon,
         ml.log_date,
         ml.note,
