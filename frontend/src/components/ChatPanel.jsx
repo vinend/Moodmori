@@ -156,11 +156,36 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
         setMessages(prevMessages => {
           // Create a set of existing message IDs for quick lookup
           const existingIds = new Set(prevMessages.map(msg => msg.id));
-          
-          // Filter out any messages that already exist in our state
-          const uniqueNewMessages = newMessagesResponse.data.messages.filter(
-            msg => !existingIds.has(msg.id) && msg.id !== 'temp-' + Date.now()
-          );
+            // Filter out any messages that already exist in our state
+          // Also ensure messages are only for the current chat
+          const uniqueNewMessages = newMessagesResponse.data.messages.filter(msg => {
+            // Skip messages that already exist in our state
+            if (existingIds.has(msg.id)) return false;
+            
+            // Skip messages that are temporary with current timestamp
+            if (msg.id === 'temp-' + Date.now()) return false;
+            
+            // For direct messages, check that they're for this conversation
+            if (!isGroup && 
+                (msg.recipient_id === parseInt(chatId, 10) || msg.sender_id === parseInt(chatId, 10))) {
+              return true;
+            }
+            
+            // For group messages, check that they're for this group
+            if (isGroup && msg.group_id === parseInt(chatId, 10)) {
+              return true;
+            }
+            
+            // Add extra check for location messages to ensure they belong to this chat
+            if (msg.type === 'location' || msg.message_type === 'location') {
+              // If there's an explicit chat_id property that doesn't match, skip it
+              if (msg.chat_id && parseInt(msg.chat_id, 10) !== parseInt(chatId, 10)) {
+                return false;
+              }
+            }
+            
+            return true;
+          });
           
           // Only add messages that don't already exist
           if (uniqueNewMessages.length > 0) {
@@ -774,8 +799,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       fileInputRef.current.value = '';
     }
   };
-  
-  // Function to send location
+    // Function to send location
   const handleSendLocation = async () => {
     if (!activeChat) return;
     
@@ -789,9 +813,12 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
           const { latitude, longitude } = position.coords;
           const locationMessage = `📍 My Location: https://maps.google.com/maps?q=${latitude},${longitude}`;
           
+          // Create unique timestamp to help prevent duplicate messages
+          const timestamp = Date.now();
+          
           // Create and send message with location link
           const tempMessage = {
-            id: `temp-${Date.now()}`,
+            id: `temp-${timestamp}-${Math.random().toString(36).substring(2, 9)}`,
             sender_id: user?.id,
             recipient_id: isGroup ? null : activeChat,
             group_id: isGroup ? activeChat : null,
@@ -799,10 +826,11 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
             created_at: new Date().toISOString(),
             is_read: false,
             isTemp: true,
-            type: 'location'
+            type: 'location',
+            chat_id: activeChat // Explicitly tie the message to the current chat
           };
           
-          // Add location message to the conversation
+          // Add location message ONLY to the current conversation's messages
           setMessages(prevMessages => [...prevMessages, tempMessage]);
           
           // Send the message to the server
@@ -810,23 +838,32 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
           if (isGroup) {
             response = await api.post(`/api/group-chats/${activeChat}/messages`, { 
               content: locationMessage,
-              type: 'location'
+              type: 'location',
+              timestamp: timestamp // Add timestamp to help prevent duplicate processing
             });
           } else {
             response = await api.post(`/api/messages/${activeChat}`, { 
               content: locationMessage,
-              type: 'location'
+              type: 'location',
+              timestamp: timestamp // Add timestamp to help prevent duplicate processing
             });
           }
           
           if (response.data && response.data.message) {
+            // Ensure message has chat_id property to tie it to the current chat
+            const actualMessage = {
+              ...response.data.message,
+              chat_id: activeChat,
+              type: 'location' // Ensure the type is explicitly set
+            };
+            
             // Replace temp message with actual message from server
             setMessages(prevMessages => prevMessages.map(msg => 
-              msg.id === tempMessage.id ? response.data.message : msg
+              msg.id === tempMessage.id ? actualMessage : msg
             ));
             
             // Update last message ID for polling
-            setLastMessageId(response.data.message.id);
+            setLastMessageId(actualMessage.id);
             
             // Refresh conversations list to show latest message
             fetchConversations();
@@ -860,15 +897,17 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
 
     try {
       setLoading(true);
-      setError('');
-
-      // Create FormData for image upload
+      setError('');      // Create FormData for image upload
       const formData = new FormData();
       formData.append('image', selectedImage);
-
+      formData.append('chat_id', activeChat.toString());
+      formData.append('timestamp', timestamp.toString());// Create unique timestamp to help prevent duplicate messages
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 9);
+      
       // Create temp message for optimistic UI update
       const tempMessage = {
-        id: `temp-${Date.now()}`,
+        id: `temp-${timestamp}-${randomStr}`,
         sender_id: user?.id,
         recipient_id: isGroup ? null : activeChat,
         group_id: isGroup ? activeChat : null,
@@ -877,7 +916,8 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
         is_read: false,
         isTemp: true,
         type: 'image',
-        image_preview: imagePreview // Add preview for optimistic UI
+        image_preview: imagePreview, // Add preview for optimistic UI
+        chat_id: activeChat // Explicitly tie the message to the current chat
       };
 
       // Add message to the UI immediately
@@ -1121,18 +1161,47 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                           ) : (
                             <p className="text-sm italic">Sending image...</p>
                           )}
-                        </div>                      ) : (msg.type === 'location' || msg.message_type === 'location') ? (
+                        </div>                        ) : (msg.type === 'location' || msg.message_type === 'location') ? (
                         // Location message
                         <div className="mb-1">
                           {msg.content.includes('maps.google.com') ? (
-                            <a 
-                              href={msg.content.split('https://')[1] ? 'https://' + msg.content.split('https://')[1] : '#'} 
-                              target="_blank" 
-                              rel="noreferrer" 
-                              className="flex items-center text-sm underline"
-                            >
-                              <FaMapMarkerAlt className="mr-1" /> View Location on Map
-                            </a>
+                            <div className="space-y-2">
+                              {/* Extract coordinates from URL and display map */}
+                              {(() => {
+                                // Extract coordinates from the URL
+                                const urlMatch = msg.content.match(/maps\?q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                                if (urlMatch && urlMatch[1] && urlMatch[2]) {
+                                  const lat = urlMatch[1];
+                                  const lng = urlMatch[2];
+                                  const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${lat},${lng}&zoom=14`;
+                                  
+                                  return (
+                                    <>
+                                      <div className="h-40 w-full overflow-hidden rounded border border-gray-300">
+                                        <iframe 
+                                          title="Location Map"
+                                          width="100%" 
+                                          height="100%" 
+                                          frameBorder="0" 
+                                          src={mapUrl} 
+                                          allowFullScreen
+                                          loading="lazy"
+                                        ></iframe>
+                                      </div>
+                                      <a 
+                                        href={`https://maps.google.com/maps?q=${lat},${lng}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center text-xs underline"
+                                      >
+                                        <FaMapMarkerAlt className="mr-1" /> Open in Google Maps
+                                      </a>
+                                    </>
+                                  );
+                                }
+                                return <p className="text-sm">{msg.content}</p>;
+                              })()}
+                            </div>
                           ) : (
                             <p className="text-sm">{msg.content}</p>
                           )}
