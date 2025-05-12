@@ -329,19 +329,35 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       setSearchLoading(false);
     }
   };
-    // Fetch all users for group creation
+  // Fetch all users for group creation
   const fetchAllUsers = async () => {
     try {
       setLoadingAllUsers(true);
+      setError(''); // Clear any previous errors
+      
+      console.log('Fetching all users for group creation');
       const response = await api.get('/api/auth/users');
       
       if (response.data && response.data.users) {
+        // Filter out current user from the list
         const usersList = response.data.users.filter(u => u.id !== user?.id);
-        setAllUsers(usersList);
-        setFilteredMembers(usersList);
+        console.log(`Loaded ${usersList.length} users for selection`);
+        
+        // Ensure user IDs are numbers, not strings
+        const processedUsers = usersList.map(u => ({
+          ...u,
+          id: typeof u.id === 'string' ? parseInt(u.id, 10) : u.id
+        }));
+        
+        setAllUsers(processedUsers);
+        setFilteredMembers(processedUsers);
+      } else {
+        console.error('Invalid response format from /api/auth/users:', response.data);
+        setError('Failed to load users. Please try again.');
       }
     } catch (err) {
       console.error('Error fetching all users:', err);
+      setError('Failed to load users. Please check your connection.');
     } finally {
       setLoadingAllUsers(false);
     }
@@ -428,36 +444,47 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       setError('Failed to start conversation');
     }
   };
-  
-  // Function to toggle user selection for group chat
+    // Function to toggle user selection for group chat
   const toggleUserSelection = (userId) => {
+    // Ensure userId is a number
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId; 
+    
+    console.log(`Toggling selection for user ID: ${numericUserId}`);
+    
     setSelectedUsers(prev => {
-      if (prev.includes(userId)) {
-        return prev.filter(id => id !== userId);
+      if (prev.includes(numericUserId)) {
+        console.log(`Removing user ${numericUserId} from selection`);
+        return prev.filter(id => id !== numericUserId);
       } else {
-        return [...prev, userId];
+        console.log(`Adding user ${numericUserId} to selection`);
+        return [...prev, numericUserId];
       }
     });
   };
-  
-  // Function to create a new group chat
+    // Function to create a new group chat
   const createGroupChat = async () => {
     if (!groupName.trim() || selectedUsers.length < 2) {
       setError('Group name and at least 2 members are required');
       return;
     }
-      try {
+    
+    try {
+      console.log('Creating group with:', { name: groupName, memberIds: selectedUsers });
+      
       const response = await api.post('/api/group-chats', {
         name: groupName,
         memberIds: selectedUsers
       });
       
       if (response.data && response.data.group) {
+        console.log('Group created successfully:', response.data.group);
+        
         // Reset states
         setGroupName('');
         setSelectedUsers([]);
         setIsCreatingGroup(false);
-          // Open the new group chat
+        
+        // Open the new group chat
         setActiveChat(response.data.group.id);
         setIsGroup(true);
         
@@ -466,6 +493,9 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
         
         // Refresh conversation list
         fetchConversations();
+      } else {
+        console.error('Invalid response format:', response.data);
+        setError('Unexpected response from server. Please try again.');
       }
     } catch (err) {
       console.error('Error creating group chat:', err);
@@ -839,13 +869,14 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     <p className="text-sm text-gray-500 text-center py-4">
                       {allUsers.length === 0 ? "No users found" : "No matching users found"}
                     </p>
-                  ) : (
-                    <div className="space-y-2">
+                  ) : (                    <div className="space-y-2">
                       {filteredMembers.map(user => (
                         <div
                           key={user.id}
-                          className={`flex items-center p-2 border border-gray-200 rounded cursor-pointer ${
-                            selectedUsers.includes(user.id) ? 'bg-gray-100' : ''
+                          className={`flex items-center p-2 border-2 rounded cursor-pointer ${
+                            selectedUsers.includes(user.id) 
+                              ? 'border-black bg-gray-100' 
+                              : 'border-gray-200 hover:border-gray-400'
                           }`}
                           onClick={() => toggleUserSelection(user.id)}
                         >
@@ -862,7 +893,14 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                               </div>
                             )}
                           </div>
-                          <span className="truncate">{user.username}</span>
+                          <span className="truncate flex-1">{user.username}</span>
+                          {selectedUsers.includes(user.id) && (
+                            <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center ml-2">
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
