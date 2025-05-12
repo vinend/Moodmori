@@ -446,25 +446,34 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
   };
     // Function to toggle user selection for group chat
   const toggleUserSelection = (userId) => {
-    // Ensure userId is a number
-    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId; 
+    // Always convert userId to a number to ensure consistent comparisons
+    const numericUserId = parseInt(userId, 10);
     
     console.log(`Toggling selection for user ID: ${numericUserId}`);
     
-    setSelectedUsers(prev => {
-      if (prev.includes(numericUserId)) {
+    setSelectedUsers(prev => {      // Check if the ID is already selected by comparing numeric values
+      const isSelected = prev.some(id => parseInt(id, 10) === numericUserId);
+      if (isSelected) {
         console.log(`Removing user ${numericUserId} from selection`);
-        return prev.filter(id => id !== numericUserId);
+        return prev.filter(id => parseInt(id, 10) !== numericUserId);
       } else {
         console.log(`Adding user ${numericUserId} to selection`);
         return [...prev, numericUserId];
       }
-    });
-  };
-    // Function to create a new group chat
+    });};
+  
+  // Function to create a new group chat
   const createGroupChat = async () => {
-    if (!groupName.trim() || selectedUsers.length < 2) {
-      setError('Group name and at least 2 members are required');
+    console.log("Creating group chat with:", { groupName, selectedUsers });
+    setError(''); // Clear previous errors
+    
+    if (!groupName.trim()) {
+      setError('Group name is required');
+      return;
+    }
+    
+    if (selectedUsers.length < 2) {
+      setError('At least 2 members are required');
       return;
     }
     
@@ -872,9 +881,8 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   ) : (                    <div className="space-y-2">
                       {filteredMembers.map(user => (
                         <div
-                          key={user.id}
-                          className={`flex items-center p-2 border-2 rounded cursor-pointer ${
-                            selectedUsers.includes(user.id) 
+                          key={user.id}                          className={`flex items-center p-2 border-2 rounded cursor-pointer ${
+                            selectedUsers.some(id => parseInt(id, 10) === parseInt(user.id, 10))
                               ? 'border-black bg-gray-100' 
                               : 'border-gray-200 hover:border-gray-400'
                           }`}
@@ -894,7 +902,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                             )}
                           </div>
                           <span className="truncate flex-1">{user.username}</span>
-                          {selectedUsers.includes(user.id) && (
+                          {selectedUsers.some(id => parseInt(id, 10) === parseInt(user.id, 10)) && (
                             <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center ml-2">
                               <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -905,15 +913,22 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                       ))}
                     </div>
                   )}
-                </div>
-                
-                <button
-                  onClick={createGroupChat}
-                  disabled={!groupName.trim() || selectedUsers.length < 2}
-                  className="mt-4 p-2 bg-black text-white w-full disabled:opacity-50"
+                </div>                  <button
+                  onClick={() => {
+                    console.log("Button clicked with:", {
+                      groupName,
+                      groupNameEmpty: !groupName.trim(),
+                      selectedUsers,
+                      selectedUsersLength: selectedUsers.length,
+                      isBelowMinimum: selectedUsers.length < 2
+                    });
+                    createGroupChat();
+                  }}
+                  className={`mt-4 p-2 ${(!groupName.trim() || selectedUsers.length < 2) ? 'bg-gray-400' : 'bg-black'} text-white w-full`}
                 >
-                  CREATE GROUP
+                  CREATE GROUP ({selectedUsers.length}/2 selected)
                 </button>
+                
                 
                 {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
               </div>
