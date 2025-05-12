@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaChevronRight, FaUser, FaComment, FaSearch, FaPlus, FaTimes, FaUsers } from 'react-icons/fa';
+import { FaChevronRight, FaUser, FaComment, FaSearch, FaPlus, FaTimes, FaUsers, FaImage, FaMapMarkerAlt, FaPaperclip } from 'react-icons/fa';
 import api from '../api/axiosConfig';
 
 const ChatPanel = ({ isOpen, onClose, user }) => {  
@@ -24,6 +24,14 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
     // Try to recover isGroup from localStorage when component mounts
     return localStorage.getItem('isGroupChat') === 'true';
   });
+  
+  // Media attachment states
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const fileInputRef = useRef(null);
   // Group chat states
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [isEditingGroup, setIsEditingGroup] = useState(false);
@@ -711,6 +719,198 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       setLoading(false);
     }
   };
+  // Function to handle image selection
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type and size
+      if (!file.type.match('image.*')) {
+        setError('Only image files are allowed');
+        return;
+      }
+      
+      // 5MB max size
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+      
+      setSelectedImage(file);
+      
+      // Create a preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // Hide attachment options after selection
+      setShowAttachmentOptions(false);
+    }
+  };
+  
+  // Function to cancel selected image
+  const cancelImageSelection = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
+  // Function to send location
+  const handleSendLocation = async () => {
+    if (!activeChat) return;
+    
+    try {
+      setIsLoadingLocation(true);
+      setLocationError('');
+      
+      // Get current position using Geolocation API
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          const locationMessage = `📍 My Location: https://maps.google.com/maps?q=${latitude},${longitude}`;
+          
+          // Create and send message with location link
+          const tempMessage = {
+            id: `temp-${Date.now()}`,
+            sender_id: user?.id,
+            recipient_id: isGroup ? null : activeChat,
+            group_id: isGroup ? activeChat : null,
+            content: locationMessage,
+            created_at: new Date().toISOString(),
+            is_read: false,
+            isTemp: true,
+            type: 'location'
+          };
+          
+          // Add location message to the conversation
+          setMessages(prevMessages => [...prevMessages, tempMessage]);
+          
+          // Send the message to the server
+          let response;
+          if (isGroup) {
+            response = await api.post(`/api/group-chats/${activeChat}/messages`, { 
+              content: locationMessage,
+              type: 'location'
+            });
+          } else {
+            response = await api.post(`/api/messages/${activeChat}`, { 
+              content: locationMessage,
+              type: 'location'
+            });
+          }
+          
+          if (response.data && response.data.message) {
+            // Replace temp message with actual message from server
+            setMessages(prevMessages => prevMessages.map(msg => 
+              msg.id === tempMessage.id ? response.data.message : msg
+            ));
+            
+            // Update last message ID for polling
+            setLastMessageId(response.data.message.id);
+            
+            // Refresh conversations list to show latest message
+            fetchConversations();
+          }
+          
+          // Hide attachment options after sending
+          setShowAttachmentOptions(false);
+          setIsLoadingLocation(false);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setLocationError('Could not access your location. Please check your browser permissions.');
+          setIsLoadingLocation(false);
+        },
+        { 
+          enableHighAccuracy: true, 
+          timeout: 10000, 
+          maximumAge: 0 
+        }
+      );
+    } catch (err) {
+      console.error('Error sending location:', err);
+      setLocationError('Failed to send location. Please try again.');
+      setIsLoadingLocation(false);
+    }
+  };
+  
+  // Function to send image
+  const handleSendImage = async () => {
+    if (!selectedImage || !activeChat) return;
+    
+    try {
+      setLoading(true);
+      setError('');
+      
+      // Create FormData for image upload
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      
+      // Create temp message for optimistic UI update
+      const tempMessage = {
+        id: `temp-${Date.now()}`,
+        sender_id: user?.id,
+        recipient_id: isGroup ? null : activeChat,
+        group_id: isGroup ? activeChat : null,
+        content: 'Sending image...',
+        created_at: new Date().toISOString(),
+        is_read: false,
+        isTemp: true,
+        type: 'image',
+        image_preview: imagePreview // Add preview for optimistic UI
+      };
+      
+      // Add message to the UI immediately
+      setMessages(prevMessages => [...prevMessages, tempMessage]);
+      
+      // Send the image
+      let response;
+      if (isGroup) {
+        response = await api.post(`/api/group-chats/${activeChat}/messages/image`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        response = await api.post(`/api/messages/${activeChat}/image`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
+      
+      if (response.data && response.data.message) {
+        // Replace temp message with actual message
+        setMessages(prevMessages => prevMessages.map(msg => 
+          msg.id === tempMessage.id ? response.data.message : msg
+        ));
+        
+        // Update last message ID for polling
+        setLastMessageId(response.data.message.id);
+        
+        // Refresh conversations list to show latest message
+        fetchConversations();
+      }
+      
+      // Reset image states
+      setSelectedImage(null);
+      setImagePreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err) {
+      console.error('Error sending image:', err);
+      setError('Failed to send image. Please try again.');
+      // Remove the temporary message on error
+      setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempMessage.id));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Don't return null anymore, just hide the panel when closed
   // This allows the active chat to persist
 
@@ -862,7 +1062,53 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                           {msg.username || msg.sender_username || 'Unknown User'}
                         </p>
                       )}
-                      <p className="text-sm">{msg.content}</p>
+
+                      {/* Handle different message types */}
+                      {msg.type === 'image' ? (
+                        // Image message
+                        <div className="mb-1">
+                          {msg.image_url ? (
+                            <img 
+                              src={msg.image_url} 
+                              alt="Shared image" 
+                              className="max-w-full rounded cursor-pointer"
+                              onClick={() => window.open(msg.image_url, '_blank')} 
+                            />
+                          ) : msg.image_preview ? (
+                            <div className="relative">
+                              <img 
+                                src={msg.image_preview} 
+                                alt="Uploading image" 
+                                className="max-w-full rounded opacity-70"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm italic">Sending image...</p>
+                          )}
+                        </div>
+                      ) : msg.type === 'location' ? (
+                        // Location message
+                        <div className="mb-1">
+                          {msg.content.includes('maps.google.com') ? (
+                            <a 
+                              href={msg.content.split('https://')[1] ? 'https://' + msg.content.split('https://')[1] : '#'} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="flex items-center text-sm underline"
+                            >
+                              <FaMapMarkerAlt className="mr-1" /> View Location on Map
+                            </a>
+                          ) : (
+                            <p className="text-sm">{msg.content}</p>
+                          )}
+                        </div>
+                      ) : (
+                        // Regular text message
+                        <p className="text-sm">{msg.content}</p>
+                      )}
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-xs opacity-70">
                           {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'sending...'}
@@ -884,9 +1130,88 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
               )}
             </div>
 
-            {/* Message Input */}
-            <div className="p-2 border-t border-gray-200 bg-white">
+            {/* Message Input */}            <div className="p-2 border-t border-gray-200 bg-white">
+              {/* Show attachment preview if an image is selected */}
+              {selectedImage && (
+                <div className="mb-2 relative">
+                  <img 
+                    src={imagePreview} 
+                    alt="Selected attachment" 
+                    className="max-h-32 rounded border border-gray-300" 
+                  />
+                  <button
+                    onClick={cancelImageSelection}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                    title="Remove attachment"
+                  >
+                    <FaTimes size={10} />
+                  </button>
+                  <button
+                    onClick={handleSendImage}
+                    className="mt-1 bg-black text-white px-2 py-1 text-xs rounded"
+                  >
+                    Send Image
+                  </button>
+                </div>
+              )}
+              
+              {/* Show loader when getting location */}
+              {isLoadingLocation && (
+                <div className="flex items-center mb-2 text-xs">
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Getting your location...
+                </div>
+              )}
+              
+              {/* Show location error if any */}
+              {locationError && (
+                <p className="text-xs text-red-500 mb-1">{locationError}</p>
+              )}
+              
+              {/* Regular message form */}
               <form className="flex" onSubmit={handleSubmit}>
+                {/* Attachment button */}
+                <div className="relative mr-2">
+                  <button 
+                    type="button"
+                    onClick={() => setShowAttachmentOptions(!showAttachmentOptions)}
+                    className="h-full px-2 border-2 border-black hover:bg-black hover:text-white"
+                  >
+                    <FaPaperclip />
+                  </button>
+                  
+                  {/* Attachment dropdown */}
+                  {showAttachmentOptions && (
+                    <div className="absolute bottom-full left-0 mb-1 bg-white border-2 border-black shadow-md rounded">
+                      <ul>
+                        <li>
+                          <label className="flex items-center p-2 hover:bg-gray-100 cursor-pointer">
+                            <FaImage className="mr-2" />
+                            <span>Image</span>
+                            <input 
+                              type="file" 
+                              ref={fileInputRef}
+                              accept="image/*"
+                              onChange={handleImageSelect}
+                              className="hidden"
+                            />
+                          </label>
+                        </li>
+                        <li>
+                          <button
+                            type="button"
+                            onClick={handleSendLocation}
+                            className="flex items-center p-2 w-full text-left hover:bg-gray-100"
+                          >
+                            <FaMapMarkerAlt className="mr-2" />
+                            <span>Location</span>
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                
                 <input 
                   type="text" 
                   value={message} 
