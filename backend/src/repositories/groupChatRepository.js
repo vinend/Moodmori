@@ -12,7 +12,7 @@ class GroupChatRepository {
    * @param {Array} memberIds - Array of user IDs to add as members
    * @returns {Object} The created group
    */  async createGroup(name, creatorId, description, memberIds) {
-    const client = await db.getClient();
+    const client = await db.pool.connect();
     
     try {
       console.log('Creating group in repository:', {
@@ -289,9 +289,8 @@ class GroupChatRepository {
    * Delete a group
    * @param {number} groupId - ID of the group to delete
    * @returns {boolean} True if successful
-   */
-  async deleteGroup(groupId) {
-    const client = await db.getClient();
+   */  async deleteGroup(groupId) {
+    const client = await db.pool.connect();
     
     try {
       await client.query('BEGIN');
