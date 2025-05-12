@@ -10,37 +10,66 @@ class GroupChatController {
    * Create a new group chat
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
-   */
-  async createGroup(req, res) {
+   */  async createGroup(req, res) {
     try {
       const creatorId = req.user.id;
       const { name, description, memberIds = [] } = req.body;
+      
+      console.log('Group creation request:', {
+        creatorId,
+        name,
+        description,
+        memberIds,
+        reqBody: req.body
+      });
       
       // Validate required fields
       if (!name) {
         return responseFormatter.error(res, 'Group name is required', 400);
       }
+        // Ensure all memberIds are numbers
+      const numericMemberIds = memberIds.map(id => 
+        typeof id === 'string' ? parseInt(id, 10) : id
+      );
       
       // Ensure creator is included in the members list
-      if (!memberIds.includes(creatorId)) {
-        memberIds.push(creatorId);
+      if (!numericMemberIds.includes(creatorId)) {
+        numericMemberIds.push(creatorId);
       }
       
-      // Create the group
+      // Make sure all memberIds are unique to avoid DB constraint violations
+      const uniqueMemberIds = [...new Set(numericMemberIds)].filter(id => !isNaN(id));
+      
+      console.log('Processed memberIds:', uniqueMemberIds);        // Create the group
       const group = await groupChatRepository.createGroup(
         name,
         creatorId,
         description || null,
-        memberIds
+        uniqueMemberIds
       );
       
       responseFormatter.success(res, {
         message: 'Group created successfully',
         group
-      });
-    } catch (error) {
+      });    } catch (error) {
       console.error('Error in createGroup:', error);
-      responseFormatter.error(res, 'Failed to create group', 500);
+      
+      // Provide a more specific error message if possible
+      let errorMessage = 'Failed to create group';
+      let statusCode = 500;
+      
+      if (error.message === 'Failed to add any members to the group') {
+        errorMessage = 'Could not add members to the group. Please verify all user IDs are valid.';
+        statusCode = 400;
+      } else if (error.code === '23505') { // PostgreSQL unique constraint violation
+        errorMessage = 'A duplicate record was detected. Please try again with unique members.';
+        statusCode = 409;
+      } else if (error.code === '23503') { // PostgreSQL foreign key violation
+        errorMessage = 'One or more references are invalid. Please check user IDs.';
+        statusCode = 400;
+      }
+      
+      responseFormatter.error(res, errorMessage, statusCode);
     }
   }
 

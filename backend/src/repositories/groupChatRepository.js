@@ -11,30 +11,122 @@ class GroupChatRepository {
    * @param {string|null} description - Description of the group
    * @param {Array} memberIds - Array of user IDs to add as members
    * @returns {Object} The created group
-   */
-  async createGroup(name, creatorId, description, memberIds) {
+   */  async createGroup(name, creatorId, description, memberIds) {
     const client = await db.getClient();
     
     try {
+      console.log('Creating group in repository:', {
+        name,
+        creatorId, 
+        description,
+        memberIds
+      });
+      
       await client.query('BEGIN');
+        // Validate creatorId is a number
+      const numericCreatorId = parseInt(creatorId, 10);
+      if (isNaN(numericCreatorId)) {
+        throw new Error(`Invalid creator ID: ${creatorId}`);
+      }
+      
+      // Verify creator exists in the database
+      const creatorCheck = await client.query(
+        'SELECT id FROM users WHERE id = $1',
+        [numericCreatorId]
+      );
+      
+      if (creatorCheck.rows.length === 0) {
+        throw new Error(`Creator with ID ${numericCreatorId} does not exist`);
+      }
+      
+      console.log('Creator verified, creating group');
       
       // Create the group
       const groupResult = await client.query(
         `INSERT INTO group_chats (name, creator_id, description, created_at)
          VALUES ($1, $2, $3, NOW())
          RETURNING id, name, creator_id, description, created_at`,
-        [name, creatorId, description]
+        [name, numericCreatorId, description]
       );
       
       const group = groupResult.rows[0];
+      console.log('Created group:', group);
+        // Add members to the group - ensure numeric IDs
+      // Use a Set to eliminate any duplicate member IDs
+      const uniqueMembers = new Set();
+        // First validate all member IDs
+      if (!memberIds || !Array.isArray(memberIds) || memberIds.length === 0) {
+        console.warn('No member IDs provided or invalid format');
+        // Always add the creator
+        uniqueMembers.add(numericCreatorId);
+      } else {
+        for (const memberId of memberIds) {
+          const numericMemberId = parseInt(memberId, 10);
+          if (!isNaN(numericMemberId)) {
+            uniqueMembers.add(numericMemberId);
+          } else {
+            console.warn(`Invalid member ID: ${memberId}, skipping`);
+          }
+        }
+      }
       
-      // Add members to the group
-      for (const memberId of memberIds) {
-        await client.query(
-          `INSERT INTO group_members (group_id, user_id, joined_at)
-           VALUES ($1, $2, NOW())`,
-          [group.id, memberId]
-        );
+      console.log(`Processed ${uniqueMembers.size} unique member IDs`);
+      
+      // Ensure we have at least one member (the creator)
+      if (uniqueMembers.size === 0) {
+        uniqueMembers.add(numericCreatorId);
+      }
+      
+      // Now add each unique member
+      const addedMembers = [];
+      for (const numericMemberId of uniqueMembers) {
+        console.log(`Adding member ${numericMemberId} to group ${group.id}`);
+        
+        try {
+          // Check if user exists first
+          const userCheck = await client.query(
+            'SELECT id FROM users WHERE id = $1',
+            [numericMemberId]
+          );
+          
+          if (userCheck.rows.length === 0) {
+            console.warn(`User ID ${numericMemberId} does not exist, skipping`);
+            continue;
+          }
+          
+          await client.query(
+            `INSERT INTO group_members (group_id, user_id, joined_at)
+             VALUES ($1, $2, NOW())`,
+            [group.id, numericMemberId]
+          );
+          
+          addedMembers.push(numericMemberId);
+        } catch (memberError) {
+          // Log the error but continue with other members
+          console.error(`Error adding member ${numericMemberId}:`, memberError);
+          // Only throw if this is a critical error, not just a duplicate entry
+          if (memberError.code !== '23505') { // 23505 is the PostgreSQL error code for unique_violation
+            throw memberError;
+          }
+        }
+      }
+        console.log(`Successfully added ${addedMembers.length} members to group ${group.id}`);
+      
+      // If no members were added, try to add just the creator as a fallback
+      if (addedMembers.length === 0) {
+        console.log(`No members added successfully, adding creator (${numericCreatorId}) as fallback`);
+        try {
+          await client.query(
+            `INSERT INTO group_members (group_id, user_id, joined_at)
+             VALUES ($1, $2, NOW())`,
+            [group.id, numericCreatorId]
+          );
+          addedMembers.push(numericCreatorId);
+          console.log(`Added creator (${numericCreatorId}) as member`);
+        } catch (creatorError) {
+          console.error(`Failed to add creator as member:`, creatorError);
+          throw new Error('Failed to add any members to the group, including the creator');
+        }
       }
       
       await client.query('COMMIT');

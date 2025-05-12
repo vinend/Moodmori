@@ -461,10 +461,13 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
         return [...prev, numericUserId];
       }
     });};
-  
-  // Function to create a new group chat
+    // Function to create a new group chat
   const createGroupChat = async () => {
-    console.log("Creating group chat with:", { groupName, selectedUsers });
+    console.log("Creating group chat with:", { 
+      groupName, 
+      selectedUsers,
+      currentUser: user
+    });
     setError(''); // Clear previous errors
     
     if (!groupName.trim()) {
@@ -476,13 +479,26 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       setError('At least 2 members are required');
       return;
     }
-    
-    try {
-      console.log('Creating group with:', { name: groupName, memberIds: selectedUsers });
+      try {      // Convert all memberIds to numbers to ensure consistent data type
+      const numericMemberIds = selectedUsers.map(id => parseInt(id, 10));
+      
+      // Ensure current user is in the members list (backend expects this)
+      const currentUserId = parseInt(user?.id, 10);
+      if (!numericMemberIds.includes(currentUserId)) {      numericMemberIds.push(currentUserId);
+      }
+      
+      // Make sure all memberIds are unique to avoid DB constraint violations
+      const uniqueMemberIds = [...new Set(numericMemberIds)];
+        console.log('Creating group with:', { 
+        name: groupName, 
+        memberIds: uniqueMemberIds,
+        user_id: currentUserId
+      });
       
       const response = await api.post('/api/group-chats', {
         name: groupName,
-        memberIds: selectedUsers
+        memberIds: uniqueMemberIds,
+        description: `Group chat created by ${user?.username}`
       });
       
       if (response.data && response.data.group) {
@@ -505,10 +521,33 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       } else {
         console.error('Invalid response format:', response.data);
         setError('Unexpected response from server. Please try again.');
-      }
-    } catch (err) {
+      }    } catch (err) {
       console.error('Error creating group chat:', err);
-      setError('Failed to create group chat. Please try again.');
+        // More detailed error message based on the error response
+      let errorMessage = 'Failed to create group chat. Please try again.';
+      
+      if (err.response) {
+        // The request was made and the server responded with an error status code
+        console.error('Error response data:', err.response.data);
+        
+        // Extract specific error message from the response
+        errorMessage = err.response.data?.message || errorMessage;
+        
+        // Add guidance based on error status
+        if (err.response.status === 400) {
+          errorMessage += ' Please check that all selected users exist and you have selected at least 2 valid members.';
+        } else if (err.response.status === 409) {
+          errorMessage += ' There was a conflict with duplicate users.';
+        } else if (err.response.status === 403) {
+          errorMessage += ' You don\'t have permission to perform this action.';
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error('No response received from server');
+        errorMessage = 'No response from server. Please check your connection and try again.';
+      }
+      
+      setError(errorMessage);
     }
   };
     // Function to fetch group chat messages
@@ -920,15 +959,24 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                       groupNameEmpty: !groupName.trim(),
                       selectedUsers,
                       selectedUsersLength: selectedUsers.length,
-                      isBelowMinimum: selectedUsers.length < 2
+                      isBelowMinimum: selectedUsers.length < 2,
+                      currentUser: user
                     });
                     createGroupChat();
                   }}
                   className={`mt-4 p-2 ${(!groupName.trim() || selectedUsers.length < 2) ? 'bg-gray-400' : 'bg-black'} text-white w-full`}
+                  disabled={!groupName.trim() || selectedUsers.length < 2}
                 >
                   CREATE GROUP ({selectedUsers.length}/2 selected)
                 </button>
                 
+                <div className="mt-2 p-2 bg-gray-100 text-xs">
+                  <p className="font-bold">Debug Info:</p>
+                  <p>Group Name: {groupName || 'Not set'}</p>
+                  <p>Selected Users: {selectedUsers.length}</p>
+                  <p>Your User ID: {user?.id}</p>
+                  <p className="mt-1">Selected User IDs: {selectedUsers.join(', ')}</p>
+                </div>
                 
                 {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
               </div>
