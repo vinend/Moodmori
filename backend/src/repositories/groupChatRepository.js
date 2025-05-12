@@ -3,15 +3,15 @@ const db = require('../database/connection');
 /**
  * Repository for handling group chat operations in the database
  */
-class GroupChatRepository {
-  /**
+class GroupChatRepository {  /**
    * Create a new group chat
    * @param {string} name - Name of the group
    * @param {number} creatorId - ID of the group creator
    * @param {string|null} description - Description of the group
    * @param {Array} memberIds - Array of user IDs to add as members
+   * @param {Object} data - Additional data like profile picture
    * @returns {Object} The created group
-   */  async createGroup(name, creatorId, description, memberIds) {
+   */  async createGroup(name, creatorId, description, memberIds, data = {}) {
     const client = await db.pool.connect();
     
     try {
@@ -40,13 +40,12 @@ class GroupChatRepository {
       }
       
       console.log('Creator verified, creating group');
-      
-      // Create the group
+        // Create the group
       const groupResult = await client.query(
-        `INSERT INTO group_chats (name, creator_id, description, created_at)
-         VALUES ($1, $2, $3, NOW())
-         RETURNING id, name, creator_id, description, created_at`,
-        [name, numericCreatorId, description]
+        `INSERT INTO group_chats (name, creator_id, description, profile_picture, created_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         RETURNING id, name, creator_id, description, profile_picture, created_at`,
+        [name, numericCreatorId, description, data?.profile_picture || null]
       );
       
       const group = groupResult.rows[0];
@@ -245,8 +244,7 @@ class GroupChatRepository {
    * @param {number} groupId - ID of the group
    * @param {Object} data - Group data to update
    * @returns {Object} The updated group
-   */
-  async updateGroup(groupId, data) {
+   */  async updateGroup(groupId, data) {
     try {
       const fields = [];
       const values = [];
@@ -264,6 +262,12 @@ class GroupChatRepository {
         paramCount++;
       }
       
+      if (data.profile_picture !== undefined) {
+        fields.push(`profile_picture = $${paramCount}`);
+        values.push(data.profile_picture);
+        paramCount++;
+      }
+      
       if (fields.length === 0) {
         throw new Error('No fields to update');
       }
@@ -274,7 +278,7 @@ class GroupChatRepository {
         `UPDATE group_chats
          SET ${fields.join(', ')}
          WHERE id = $${paramCount}
-         RETURNING id, name, creator_id, description, created_at`,
+         RETURNING id, name, creator_id, description, profile_picture, created_at`,
         values
       );
       

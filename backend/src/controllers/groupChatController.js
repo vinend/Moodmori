@@ -40,12 +40,19 @@ class GroupChatController {
       // Make sure all memberIds are unique to avoid DB constraint violations
       const uniqueMemberIds = [...new Set(numericMemberIds)].filter(id => !isNaN(id));
       
-      console.log('Processed memberIds:', uniqueMemberIds);        // Create the group
+      console.log('Processed memberIds:', uniqueMemberIds);      // Handle profile picture if uploaded
+      let profilePictureUrl = null;
+      if (req.file) {
+        profilePictureUrl = req.file.path;
+      }
+      
+      // Create the group
       const group = await groupChatRepository.createGroup(
         name,
         creatorId,
         description || null,
-        uniqueMemberIds
+        uniqueMemberIds,
+        { profile_picture: profilePictureUrl }
       );
       
       responseFormatter.success(res, {
@@ -131,14 +138,20 @@ class GroupChatController {
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    */
-  async updateGroup(req, res) {
+  async updateGroup(req, res) {    
     try {
       const userId = req.user.id;
       const { groupId } = req.params;
       const { name, description } = req.body;
       
+      // Handle the profile picture upload if there is one
+      let profilePictureUrl = undefined;
+      if (req.file) {
+        profilePictureUrl = req.file.path;
+      }
+      
       // Validate if there's anything to update
-      if (!name && description === undefined) {
+      if (!name && description === undefined && profilePictureUrl === undefined) {
         return responseFormatter.error(res, 'No fields to update', 400);
       }
       
@@ -150,12 +163,11 @@ class GroupChatController {
       
       if (group.creator_id !== userId) {
         return responseFormatter.error(res, 'Only the group creator can update the group', 403);
-      }
-      
-      // Update the group
+      }      // Update the group
       const updatedGroup = await groupChatRepository.updateGroup(groupId, {
         name,
-        description
+        description,
+        profile_picture: profilePictureUrl
       });
       
       responseFormatter.success(res, {

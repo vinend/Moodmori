@@ -1,6 +1,7 @@
 const express = require('express');
 const groupChatController = require('../controllers/groupChatController');
 const authenticate = require('../utils/authMiddleware');
+const { groupImageUploader } = require('../utils/groupFileUploader');
 
 const router = express.Router();
 
@@ -9,7 +10,7 @@ const router = express.Router();
  */
 
 // Create a new group chat
-router.post('/', authenticate, groupChatController.createGroup);
+router.post('/', authenticate, groupImageUploader.single('profilePicture'), groupChatController.createGroup);
 
 // Get all groups that the user is part of
 router.get('/', authenticate, groupChatController.getUserGroups);
@@ -18,7 +19,7 @@ router.get('/', authenticate, groupChatController.getUserGroups);
 router.get('/:groupId', authenticate, groupChatController.getGroupDetails);
 
 // Update a group's details
-router.put('/:groupId', authenticate, groupChatController.updateGroup);
+router.put('/:groupId', authenticate, groupImageUploader.single('profilePicture'), groupChatController.updateGroup);
 
 // Delete a group
 router.delete('/:groupId', authenticate, groupChatController.deleteGroup);

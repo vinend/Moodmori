@@ -4,7 +4,15 @@ import api from '../api/axiosConfig';
 
 const ChatPanel = ({ isOpen, onClose, user }) => {  
   // States for panel management
-  const [activeChat, setActiveChat] = useState(null);
+  const [activeChat, setActiveChat] = useState(() => {
+    // Try to recover activeChat from localStorage when component mounts
+    const savedChat = localStorage.getItem('activeChat');
+    const savedIsGroup = localStorage.getItem('isGroupChat');
+    if (savedChat) {
+      return parseInt(savedChat, 10);
+    }
+    return null;
+  });
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [chatUser, setChatUser] = useState(null);
@@ -12,12 +20,18 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
   const [error, setError] = useState('');
   const [lastMessageId, setLastMessageId] = useState(null);
   const pollingInterval = useRef(null);
-  const [isGroup, setIsGroup] = useState(false);
-
+  const [isGroup, setIsGroup] = useState(() => {
+    // Try to recover isGroup from localStorage when component mounts
+    return localStorage.getItem('isGroupChat') === 'true';
+  });
   // Group chat states
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [isEditingGroup, setIsEditingGroup] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [groupName, setGroupName] = useState('');
+  const [groupProfilePicture, setGroupProfilePicture] = useState('');
+  const [editGroupName, setEditGroupName] = useState('');
+  const [editGroupProfilePicture, setEditGroupProfilePicture] = useState('');
   const [allUsers, setAllUsers] = useState([]);
   const [loadingAllUsers, setLoadingAllUsers] = useState(false);
   const [memberSearchTerm, setMemberSearchTerm] = useState('');
@@ -37,9 +51,9 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
 
   const messagesEndRef = useRef(null);
   const searchInputRef = useRef(null);
-  
-  // Fetch conversations when panel opens
-  useEffect(() => {    if (isOpen) {
+    // Fetch conversations when panel opens
+  useEffect(() => {    
+    if (isOpen) {
       fetchConversations();
     }
   }, [isOpen]);
@@ -64,6 +78,17 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
     // Cleanup on unmount
     return () => {      stopMessagePolling();
     };
+  }, [activeChat, isGroup]);
+
+  // Persist activeChat state to localStorage
+  useEffect(() => {
+    if (activeChat) {
+      localStorage.setItem('activeChat', activeChat);
+      localStorage.setItem('isGroupChat', isGroup);
+    } else {
+      localStorage.removeItem('activeChat');
+      localStorage.removeItem('isGroupChat');
+    }
   }, [activeChat, isGroup]);
 
   // Scroll to bottom of messages
@@ -459,9 +484,10 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       } else {
         console.log(`Adding user ${numericUserId} to selection`);
         return [...prev, numericUserId];
-      }
-    });};
-    // Function to create a new group chat
+      }    });
+  };
+    
+  // Function to create a new group chat
   const createGroupChat = async () => {
     console.log("Creating group chat with:", { 
       groupName, 
@@ -488,17 +514,31 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       }
       
       // Make sure all memberIds are unique to avoid DB constraint violations
-      const uniqueMemberIds = [...new Set(numericMemberIds)];
-        console.log('Creating group with:', { 
+      const uniqueMemberIds = [...new Set(numericMemberIds)];      console.log('Creating group with:', { 
         name: groupName, 
         memberIds: uniqueMemberIds,
         user_id: currentUserId
       });
       
-      const response = await api.post('/api/group-chats', {
-        name: groupName,
-        memberIds: uniqueMemberIds,
-        description: `Group chat created by ${user?.username}`
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('name', groupName);
+      formData.append('description', `Group chat created by ${user?.username}`);
+      
+      // Add all member IDs to the form data
+      uniqueMemberIds.forEach((memberId) => {
+        formData.append('memberIds', memberId);
+      });
+      
+      // Add profile picture if selected
+      if (groupProfilePicture) {
+        formData.append('profilePicture', groupProfilePicture);
+      }
+      
+      const response = await api.post('/api/group-chats', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
       
       if (response.data && response.data.group) {
@@ -567,6 +607,9 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
         setChatUser({
           id: groupResponse.data.group.id,
           username: groupResponse.data.group.name,
+          profile_picture: groupResponse.data.group.profile_picture,
+          description: groupResponse.data.group.description,
+          creator_id: groupResponse.data.group.creator_id,
           isGroup: true,
           members: groupResponse.data.members || []
         });
@@ -609,8 +652,65 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
     }
   };
 
-  // Return if panel is closed
-  if (!isOpen) return null;
+  // Function to update group details
+  const updateGroupDetails = async () => {
+    if (!chatUser || !isGroup) return;
+    
+    // Validate that there's something to update
+    if (!editGroupName.trim() && !editGroupProfilePicture) {
+      setError('Please provide a name or profile picture to update');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setError('');
+        // Create FormData for file upload
+      const formData = new FormData();
+      
+      if (editGroupName.trim()) {
+        formData.append('name', editGroupName.trim());
+      }
+      
+      if (editGroupProfilePicture) {
+        formData.append('profilePicture', editGroupProfilePicture);
+      }
+      
+      // Make the API call to update the group
+      const response = await api.put(`/api/group-chats/${chatUser.id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (response.data && response.data.group) {
+        console.log('Group updated successfully:', response.data.group);
+        
+        // Update the local state
+        setChatUser(prevUser => ({
+          ...prevUser,
+          username: response.data.group.name,
+          profile_picture: response.data.group.profile_picture,
+          description: response.data.group.description
+        }));
+        
+        // Reset the form and close the editing interface
+        setEditGroupName('');
+        setEditGroupProfilePicture('');
+        setIsEditingGroup(false);
+        
+        // Refresh conversations list to show the updated group
+        fetchConversations();
+      }
+    } catch (err) {
+      console.error('Error updating group:', err);
+      setError('Failed to update group. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Don't return null anymore, just hide the panel when closed
+  // This allows the active chat to persist
 
   return (
     <div className={`fixed left-0 top-[64px] bottom-0 w-64 bg-white border-r-2 border-black shadow-lg z-30 flex flex-col font-mono transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -655,10 +755,24 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                       )}
                     </div>
                     <div>
-                      <div className="flex items-center">
-                        <span className="font-bold truncate">{chatUser.username || chatUser.name}</span>
+                      <div className="flex items-center">                        <span className="font-bold truncate">{chatUser.username || chatUser.name}</span>
                         {isGroup && (
-                          <span className="ml-1 text-xs bg-gray-200 px-1 rounded">Group</span>
+                          <>
+                            <span className="ml-1 text-xs bg-gray-200 px-1 rounded">Group</span>
+                            {chatUser.creator_id === parseInt(user?.id, 10) && (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsEditingGroup(true);
+                                  setEditGroupName(chatUser.username);
+                                  setEditGroupProfilePicture(chatUser.profile_picture || '');
+                                }}
+                                className="ml-1 text-xs bg-gray-100 hover:bg-gray-200 px-1 rounded"
+                              >
+                                Edit
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                       
@@ -669,8 +783,47 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                       )}
                     </div>
                   </div>
+                    {/* Group editing interface */}
+                  {isGroup && isEditingGroup && (
+                    <div className="mt-2 border-t border-gray-200 pt-2">
+                      <div className="text-xs font-bold mb-1">Edit Group</div>
+                      <input 
+                        type="text"
+                        placeholder="Group Name"
+                        value={editGroupName}
+                        onChange={(e) => setEditGroupName(e.target.value)}
+                        className="w-full p-1 mb-1 border border-gray-300 text-xs"
+                      />                      <label className="block text-xs mb-1">
+                        Profile Picture
+                        <input 
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setEditGroupProfilePicture(e.target.files[0])}
+                          className="w-full p-1 mb-1 border border-gray-300 text-xs"
+                        />
+                      </label>
+                      <div className="flex space-x-1">
+                        <button
+                          onClick={() => {
+                            setIsEditingGroup(false);
+                            setEditGroupName('');
+                            setEditGroupProfilePicture('');
+                          }}
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-xs p-1"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={updateGroupDetails}
+                          className="flex-1 bg-black text-white hover:bg-gray-800 text-xs p-1"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   
-                  {isGroup && chatUser.members && (
+                  {isGroup && chatUser.members && !isEditingGroup && (
                     <div className="mt-2 text-xs flex flex-wrap gap-1 max-h-10 overflow-y-auto">
                       {chatUser.members.map(member => (
                         <span key={member.id} className="bg-gray-100 px-1 py-0.5 rounded">
@@ -843,9 +996,20 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   placeholder="Group Name" 
                   value={groupName} 
                   onChange={(e) => setGroupName(e.target.value)}
-                  className="p-2 mb-4 border-2 border-black"
-                />
-                  <div className="mb-3">
+                  className="p-2 mb-2 border-2 border-black"
+                />                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Group Profile Picture (optional)
+                  </label>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => setGroupProfilePicture(e.target.files[0])}
+                    className="p-2 w-full border-2 border-black"
+                  />
+                </div>
+                
+                <div className="mb-3">
                   <h4 className="font-bold mb-2">Selected Members ({selectedUsers.length})</h4>
                   <div className="flex flex-wrap gap-1 mb-2">
                     {selectedUsers.length > 0 ? (
