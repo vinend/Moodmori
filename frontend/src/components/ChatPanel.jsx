@@ -157,8 +157,21 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
           // Create a set of existing message IDs for quick lookup
           const existingIds = new Set(prevMessages.map(msg => msg.id));
             // Filter out any messages that already exist in our state
-          // Also ensure messages are only for the current chat
-          const uniqueNewMessages = newMessagesResponse.data.messages.filter(msg => {
+          // Also ensure messages are only for the current chat          // Pre-process messages to ensure location messages are properly identified
+          const processedMessages = newMessagesResponse.data.messages.map(msg => {
+            // Check content for location messages
+            if (msg.content && msg.content.includes('maps.google.com')) {
+              return {
+                ...msg,
+                type: 'location',
+                message_type: 'location',
+                chat_id: chatId
+              };
+            }
+            return msg;
+          });
+          
+          const uniqueNewMessages = processedMessages.filter(msg => {
             // Skip messages that already exist in our state
             if (existingIds.has(msg.id)) return false;
             
@@ -175,11 +188,15 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
             if (isGroup && msg.group_id === parseInt(chatId, 10)) {
               return true;
             }
-            
-            // Add extra check for location messages to ensure they belong to this chat
+              // Add extra check for location messages to ensure they belong to this chat
             if (msg.type === 'location' || msg.message_type === 'location') {
-              // If there's an explicit chat_id property that doesn't match, skip it
-              if (msg.chat_id && parseInt(msg.chat_id, 10) !== parseInt(chatId, 10)) {
+              // Add chat_id to location messages if missing
+              if (!msg.chat_id) {
+                msg.chat_id = chatId;
+              }
+              
+              // Only include location messages that belong to this chat
+              if (parseInt(msg.chat_id, 10) !== parseInt(chatId, 10)) {
                 return false;
               }
             }
@@ -287,13 +304,18 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       
       messagesList.forEach(msg => {
         if (!messageIds.has(msg.id)) {
-          messageIds.add(msg.id);
-          
-          // Ensure message has a type property for frontend rendering
+          messageIds.add(msg.id);          // Ensure message has a type property for frontend rendering
           if (msg.message_type === 'image' && !msg.type) {
             msg.type = 'image';
           } else if (msg.message_type === 'location' && !msg.type) {
             msg.type = 'location';
+            // Make sure location messages have the chat_id for proper tracking
+            msg.chat_id = activeChat;
+          } else if (msg.content && msg.content.includes('maps.google.com')) {
+            // Also check the content to identify location messages that might not have the proper type
+            msg.type = 'location';
+            msg.message_type = 'location';
+            msg.chat_id = activeChat;
           }
           
           uniqueMessages.push(msg);
@@ -645,12 +667,23 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       const messagesResponse = await api.get(`/api/group-chats/${groupId}/messages`);
         if (messagesResponse.data && groupResponse.data) {
         // Process messages to ensure types are set correctly
-        const processedMessages = (messagesResponse.data.messages || []).map(msg => {
-          // Ensure message has a type property for frontend rendering
+        const processedMessages = (messagesResponse.data.messages || []).map(msg => {          // Ensure message has a type property for frontend rendering
           if (msg.message_type === 'image' && !msg.type) {
             return { ...msg, type: 'image' };
           } else if (msg.message_type === 'location' && !msg.type) {
-            return { ...msg, type: 'location' };
+            return { 
+              ...msg, 
+              type: 'location',
+              chat_id: groupId // Add chat_id to ensure it's associated with this group
+            };
+          } else if (msg.content && msg.content.includes('maps.google.com')) {
+            // Also check the content to identify location messages that might not have the proper type
+            return {
+              ...msg,
+              type: 'location',
+              message_type: 'location',
+              chat_id: groupId
+            };
           }
           return msg;
         });
@@ -832,19 +865,22 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
           
           // Add location message ONLY to the current conversation's messages
           setMessages(prevMessages => [...prevMessages, tempMessage]);
-          
-          // Send the message to the server
+            // Send the message to the server
           let response;
           if (isGroup) {
             response = await api.post(`/api/group-chats/${activeChat}/messages`, { 
               content: locationMessage,
               type: 'location',
+              message_type: 'location', // Ensure consistent type on server
+              chat_id: activeChat, // Explicitly tie to current chat
               timestamp: timestamp // Add timestamp to help prevent duplicate processing
             });
           } else {
             response = await api.post(`/api/messages/${activeChat}`, { 
               content: locationMessage,
               type: 'location',
+              message_type: 'location', // Ensure consistent type on server
+              chat_id: activeChat, // Explicitly tie to current chat
               timestamp: timestamp // Add timestamp to help prevent duplicate processing
             });
           }
