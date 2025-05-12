@@ -857,10 +857,9 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                           ? 'bg-black text-white ml-auto'
                           : 'bg-gray-200'
                       }`}
-                    >
-                      {isGroup && msg.sender_id !== user?.id && (
+                    >                      {isGroup && msg.sender_id !== user?.id && (
                         <p className="text-xs font-bold mb-1">
-                          {msg.sender_username || 'Unknown User'}
+                          {msg.username || msg.sender_username || 'Unknown User'}
                         </p>
                       )}
                       <p className="text-sm">{msg.content}</p>
