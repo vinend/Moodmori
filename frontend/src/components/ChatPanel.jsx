@@ -216,16 +216,18 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       
       // Fetch group conversations
       const groupResponse = await api.get('/api/group-chats');
-      
-      // Combine both types of conversations
+        // Combine both types of conversations
       const directConversations = dmResponse.data.conversations || [];
-      const groupConversations = groupResponse.data.groupChats || [];
+      const groupConversations = groupResponse.data.groups || [];
       
       // Mark group chats with is_group flag
       const formattedGroupChats = groupConversations.map(group => ({
         ...group,
         is_group: true
       }));
+        // Log the group conversations for debugging
+      console.log('Group conversations:', groupConversations);
+      console.log('Formatted group chats:', formattedGroupChats);
       
       // Set all conversations
       setConversations([...directConversations, ...formattedGroupChats]);
