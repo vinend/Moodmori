@@ -256,14 +256,21 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       const response = await api.get(`/api/messages/${userId}`);
       
       const messagesList = response.data.messages || [];
-      
-      // Remove any duplicate messages by ID
+        // Remove any duplicate messages by ID and ensure message types are set correctly
       const uniqueMessages = [];
       const messageIds = new Set();
       
       messagesList.forEach(msg => {
         if (!messageIds.has(msg.id)) {
           messageIds.add(msg.id);
+          
+          // Ensure message has a type property for frontend rendering
+          if (msg.message_type === 'image' && !msg.type) {
+            msg.type = 'image';
+          } else if (msg.message_type === 'location' && !msg.type) {
+            msg.type = 'location';
+          }
+          
           uniqueMessages.push(msg);
         }
       });
@@ -611,9 +618,19 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       
       // Then get the messages
       const messagesResponse = await api.get(`/api/group-chats/${groupId}/messages`);
-      
-      if (messagesResponse.data && groupResponse.data) {
-        setMessages(messagesResponse.data.messages || []);
+        if (messagesResponse.data && groupResponse.data) {
+        // Process messages to ensure types are set correctly
+        const processedMessages = (messagesResponse.data.messages || []).map(msg => {
+          // Ensure message has a type property for frontend rendering
+          if (msg.message_type === 'image' && !msg.type) {
+            return { ...msg, type: 'image' };
+          } else if (msg.message_type === 'location' && !msg.type) {
+            return { ...msg, type: 'location' };
+          }
+          return msg;
+        });
+        
+        setMessages(processedMessages);
         setChatUser({
           id: groupResponse.data.group.id,
           username: groupResponse.data.group.name,
@@ -840,15 +857,15 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
   // Function to send image
   const handleSendImage = async () => {
     if (!selectedImage || !activeChat) return;
-    
+
     try {
       setLoading(true);
       setError('');
-      
+
       // Create FormData for image upload
       const formData = new FormData();
       formData.append('image', selectedImage);
-      
+
       // Create temp message for optimistic UI update
       const tempMessage = {
         id: `temp-${Date.now()}`,
@@ -862,39 +879,47 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
         type: 'image',
         image_preview: imagePreview // Add preview for optimistic UI
       };
-      
+
       // Add message to the UI immediately
-      setMessages(prevMessages => [...prevMessages, tempMessage]);
-      
-      // Send the image
+      setMessages(prevMessages => [...prevMessages, tempMessage]);      // Send the image
       let response;
       if (isGroup) {
+        console.log('Sending image to group chat:', activeChat);
         response = await api.post(`/api/group-chats/${activeChat}/messages/image`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
+        console.log('Group chat image response:', response.data);
       } else {
+        console.log('Sending image to direct message:', activeChat);
         response = await api.post(`/api/messages/${activeChat}/image`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
-      }
-      
-      if (response.data && response.data.message) {
+        console.log('Direct message image response:', response.data);
+      }if (response.data && response.data.message) {
+        console.log('Image message response:', response.data.message);
+        
+        // Make sure we have the right type and image_url for display
+        const actualMessage = {
+          ...response.data.message,
+          type: 'image'  // Ensure the message has the correct type for rendering
+        };
+        
         // Replace temp message with actual message
         setMessages(prevMessages => prevMessages.map(msg => 
-          msg.id === tempMessage.id ? response.data.message : msg
+          msg.id === tempMessage.id ? actualMessage : msg
         ));
-        
+
         // Update last message ID for polling
         setLastMessageId(response.data.message.id);
-        
+
         // Refresh conversations list to show latest message
         fetchConversations();
       }
-      
+
       // Reset image states
       setSelectedImage(null);
       setImagePreview(null);
@@ -1061,19 +1086,27 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                         <p className="text-xs font-bold mb-1">
                           {msg.username || msg.sender_username || 'Unknown User'}
                         </p>
-                      )}
-
-                      {/* Handle different message types */}
-                      {msg.type === 'image' ? (
+                      )}                      {/* Handle different message types */}
+                      {(msg.type === 'image' || msg.message_type === 'image') ? (
                         // Image message
-                        <div className="mb-1">
-                          {msg.image_url ? (
-                            <img 
-                              src={msg.image_url} 
-                              alt="Shared image" 
-                              className="max-w-full rounded cursor-pointer"
-                              onClick={() => window.open(msg.image_url, '_blank')} 
-                            />
+                        <div className="mb-1">                          {msg.image_url ? (
+                            <>
+                              <img 
+                                src={msg.image_url} 
+                                alt="Shared image" 
+                                className="max-w-full rounded cursor-pointer"
+                                onClick={() => window.open(msg.image_url, '_blank')} 
+                                onLoad={() => console.log('Image loaded successfully:', msg.image_url)}
+                                onError={(e) => {
+                                  console.error('Error loading image:', msg.image_url);
+                                  e.target.onerror = null; 
+                                  e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Available';
+                                }}
+                              />
+                              <p className="text-xs mt-1 opacity-75">
+                                {msg.content !== 'Sent an image' ? msg.content : ''}
+                              </p>
+                            </>
                           ) : msg.image_preview ? (
                             <div className="relative">
                               <img 
@@ -1088,8 +1121,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                           ) : (
                             <p className="text-sm italic">Sending image...</p>
                           )}
-                        </div>
-                      ) : msg.type === 'location' ? (
+                        </div>                      ) : (msg.type === 'location' || msg.message_type === 'location') ? (
                         // Location message
                         <div className="mb-1">
                           {msg.content.includes('maps.google.com') ? (

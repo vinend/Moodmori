@@ -2,6 +2,7 @@ const express = require('express');
 const groupChatController = require('../controllers/groupChatController');
 const authenticate = require('../utils/authMiddleware');
 const { groupImageUploader } = require('../utils/groupFileUploader');
+const { chatImageUploader } = require('../utils/chatImageUploader');
 
 const router = express.Router();
 
@@ -35,5 +36,8 @@ router.post('/:groupId/messages', authenticate, groupChatController.sendGroupMes
 
 // Get messages from a group
 router.get('/:groupId/messages', authenticate, groupChatController.getGroupMessages);
+
+// Upload an image in a group chat
+router.post('/:groupId/messages/image', authenticate, chatImageUploader.single('image'), groupChatController.sendImageMessage);
 
 module.exports = router;

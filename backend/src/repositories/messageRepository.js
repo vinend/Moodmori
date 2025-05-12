@@ -9,17 +9,22 @@ class MessageRepository {
    * @param {number} senderId - ID of the message sender
    * @param {number} recipientId - ID of the message recipient
    * @param {string} content - Message content
+   * @param {string} imageUrl - URL of the image (optional)
+   * @param {string} messageType - Type of the message (e.g., 'text', 'image')
    * @returns {Object} Created message
    */
-  async createMessage(senderId, recipientId, content) {
+  async createMessage(senderId, recipientId, content, imageUrl = null, messageType = 'text') {
     try {
+      // Set a default placeholder for content if it's null and the message type is 'image'
+      const messageContent = content || (messageType === 'image' ? 'Sent an image' : '');
+
       const result = await db.query(
-        `INSERT INTO direct_messages (sender_id, recipient_id, content, created_at)
-         VALUES ($1, $2, $3, NOW())
-         RETURNING id, sender_id, recipient_id, content, created_at, is_read`,
-        [senderId, recipientId, content]
+        `INSERT INTO direct_messages (sender_id, recipient_id, content, image_url, message_type, created_at)
+         VALUES ($1, $2, $3, $4, $5, NOW())
+         RETURNING id, sender_id, recipient_id, content, image_url, message_type, created_at, is_read`,
+        [senderId, recipientId, messageContent, imageUrl, messageType]
       );
-      
+
       return result.rows[0];
     } catch (error) {
       console.error('Error in createMessage:', error);

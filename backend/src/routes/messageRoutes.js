@@ -1,6 +1,7 @@
 const express = require('express');
 const messageController = require('../controllers/messageController');
 const authenticate = require('../utils/authMiddleware');
+const { chatImageUploader } = require('../utils/chatImageUploader');
 
 const router = express.Router();
 
@@ -21,6 +22,9 @@ router.post('/init/:userId', authenticate, messageController.initConversation);
 
 // Send a direct message
 router.post('/:userId', authenticate, messageController.sendMessage);
+
+// Upload an image in a direct message
+router.post('/:userId/image', authenticate, chatImageUploader.single('image'), messageController.sendImageMessage);
 
 // Mark message as read
 router.put('/read/:messageId', authenticate, messageController.markAsRead);

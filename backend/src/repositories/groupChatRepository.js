@@ -368,25 +368,38 @@ class GroupChatRepository {  /**
       console.error('Error in removeMember:', error);
       throw error;
     }
-  }
-
-  /**
+  }  /**
    * Create a new message in a group
    * @param {number} groupId - ID of the group
    * @param {number} senderId - ID of the message sender
    * @param {string} content - Message content
+   * @param {string} imageUrl - URL of image attachment (optional)
+   * @param {string} messageType - Type of message ('text' or 'image')
    * @returns {Object} The created message
-   */
-  async createGroupMessage(groupId, senderId, content) {
+   */async createGroupMessage(groupId, senderId, content, imageUrl = null, messageType = 'text') {
     try {
+      // For image messages, we'll set content to a default placeholder if it's null
+      const messageContent = content || (messageType === 'image' ? 'Sent an image' : '');
+      
       const result = await db.query(
-        `INSERT INTO group_messages (group_id, sender_id, content, created_at)
-         VALUES ($1, $2, $3, NOW())
-         RETURNING id, group_id, sender_id, content, created_at`,
-        [groupId, senderId, content]
+        `INSERT INTO group_messages (group_id, sender_id, content, image_url, message_type, created_at)
+         VALUES ($1, $2, $3, $4, $5, NOW())
+         RETURNING id, group_id, sender_id, content, image_url, message_type, created_at`,
+        [groupId, senderId, messageContent, imageUrl, messageType]
       );
       
-      return result.rows[0];
+      // Get the username for the sender
+      const userResult = await db.query(
+        'SELECT username FROM users WHERE id = $1',
+        [senderId]
+      );
+      
+      const message = result.rows[0];
+      if (userResult.rows.length > 0) {
+        message.username = userResult.rows[0].username;
+      }
+      
+      return message;
     } catch (error) {
       console.error('Error in createGroupMessage:', error);
       throw error;
@@ -400,10 +413,15 @@ class GroupChatRepository {  /**
    * @returns {Array} List of messages with sender info
    */
   async getGroupMessages(groupId, options = { limit: 50, offset: 0 }) {
-    try {
-      const result = await db.query(
+    try {      const result = await db.query(
         `SELECT 
-           gm.*,
+           gm.id, 
+           gm.group_id, 
+           gm.sender_id, 
+           gm.content, 
+           gm.image_url, 
+           gm.message_type, 
+           gm.created_at,
            u.username,
            u.profile_picture
          FROM group_messages gm

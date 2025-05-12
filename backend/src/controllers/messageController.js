@@ -122,6 +122,51 @@ class MessageController {
   }
 
   /**
+   * Send an image in a direct message
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async sendImageMessage(req, res) {
+    try {
+      const senderId = req.user.id;
+      const recipientId = req.params.userId;
+      const imageUrl = req.file?.path;
+
+      // Validate required fields
+      if (!recipientId || !imageUrl) {
+        return responseFormatter.error(res, 'Recipient ID and image are required', 400);
+      }
+
+      // Validate recipient exists
+      const recipient = await userRepository.findById(recipientId);
+      if (!recipient) {
+        return responseFormatter.error(res, 'Recipient not found', 404);
+      }
+
+      // Cannot send message to self
+      if (parseInt(recipientId) === senderId) {
+        return responseFormatter.error(res, 'Cannot send message to yourself', 400);
+      }      // Make sure image URL is properly formatted
+      const formattedImageUrl = imageUrl.startsWith('http') ? imageUrl : `${req.protocol}://${req.get('host')}/${imageUrl}`;
+      console.log('Direct Message Image URL:', formattedImageUrl);
+      
+      // Save the image message in the database
+      const messageData = await messageRepository.createMessage(senderId, parseInt(recipientId), null, formattedImageUrl, 'image');
+
+      // Make sure the message has proper type for frontend
+      messageData.type = 'image';
+
+      responseFormatter.success(res, {
+        status: 'Image message sent successfully',
+        message: messageData
+      });
+    } catch (error) {
+      console.error('Error in sendImageMessage:', error);
+      responseFormatter.error(res, 'Failed to send image message', 500);
+    }
+  }
+
+  /**
    * Mark a message as read
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object

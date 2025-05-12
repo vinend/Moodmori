@@ -319,8 +319,7 @@ class GroupChatController {
       const isMember = await groupChatRepository.isGroupMember(groupId, senderId);
       if (!isMember) {
         return responseFormatter.error(res, 'You are not a member of this group', 403);
-      }
-        // Send the message
+      }        // Send the message
       const messageData = await groupChatRepository.createGroupMessage(groupId, senderId, content);
       
       responseFormatter.success(res, {
@@ -329,6 +328,41 @@ class GroupChatController {
     } catch (error) {
       console.error('Error in sendGroupMessage:', error);
       responseFormatter.error(res, 'Failed to send message', 500);
+    }
+  }
+
+  /**
+   * Send an image in a group chat
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async sendImageMessage(req, res) {
+    try {
+      const senderId = req.user.id;
+      const groupId = req.params.groupId;
+      const imageUrl = req.file?.path;
+
+      // Validate required fields
+      if (!groupId || !imageUrl) {
+        return responseFormatter.error(res, 'Group ID and image are required', 400);
+      }      // Validate group exists and user is a member
+      const isMember = await groupChatRepository.isGroupMember(groupId, senderId);
+      if (!isMember) {
+        return responseFormatter.error(res, 'You are not a member of this group', 403);
+      }      // Make sure image URL is properly formatted
+      const formattedImageUrl = imageUrl.startsWith('http') ? imageUrl : `${req.protocol}://${req.get('host')}/${imageUrl}`;
+      console.log('Group Chat Image URL:', formattedImageUrl);
+      
+      // Save the image message in the database
+      const messageData = await groupChatRepository.createGroupMessage(groupId, senderId, 'Sent an image', formattedImageUrl, 'image');
+
+      responseFormatter.success(res, {
+        status: 'Image message sent successfully',
+        message: messageData
+      });
+    } catch (error) {
+      console.error('Error in sendImageMessage:', error);
+      responseFormatter.error(res, 'Failed to send image message', 500);
     }
   }
 
@@ -348,8 +382,7 @@ class GroupChatController {
       if (!isMember) {
         return responseFormatter.error(res, 'You are not a member of this group', 403);
       }
-      
-      // Get messages
+        // Get messages
       const messages = await groupChatRepository.getGroupMessages(
         groupId,
         {
@@ -357,6 +390,19 @@ class GroupChatController {
           offset: parseInt(offset)
         }
       );
+      
+      // Add debug logs to check if image_url and message_type fields are present
+      if (messages.length > 0) {
+        const hasImages = messages.some(m => m.message_type === 'image' && m.image_url);
+        console.log(`Group ${groupId} has ${messages.length} messages, ${hasImages ? 'including' : 'not including'} images`);
+        
+        // If any message has image_type but no type field, add it
+        messages.forEach(message => {
+          if (message.message_type === 'image' && !message.type) {
+            message.type = 'image';
+          }
+        });
+      }
       
       responseFormatter.success(res, { messages });
     } catch (error) {
