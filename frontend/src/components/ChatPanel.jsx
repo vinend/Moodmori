@@ -926,20 +926,23 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       setIsLoadingLocation(false);
     }
   };
-  
-  // Function to send image
+    // Function to send image
   const handleSendImage = async () => {
     if (!selectedImage || !activeChat) return;
 
     try {
       setLoading(true);
-      setError('');      // Create FormData for image upload
+      setError('');
+      
+      // Create unique timestamp to help prevent duplicate messages
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 9);
+      
+      // Create FormData for image upload
       const formData = new FormData();
       formData.append('image', selectedImage);
       formData.append('chat_id', activeChat.toString());
-      formData.append('timestamp', timestamp.toString());// Create unique timestamp to help prevent duplicate messages
-      const timestamp = Date.now();
-      const randomStr = Math.random().toString(36).substring(2, 9);
+      formData.append('timestamp', timestamp.toString());
       
       // Create temp message for optimistic UI update
       const tempMessage = {
@@ -1001,12 +1004,13 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       setImagePreview(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
-      }
-    } catch (err) {
+      }    } catch (err) {
       console.error('Error sending image:', err);
       setError('Failed to send image. Please try again.');
+      
       // Remove the temporary message on error
-      setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempMessage.id));
+      // Use a safer approach by filtering out any temp messages with IDs that start with 'temp-'
+      setMessages(prevMessages => prevMessages.filter(msg => !msg.id.startsWith('temp-')));
     } finally {
       setLoading(false);
     }
