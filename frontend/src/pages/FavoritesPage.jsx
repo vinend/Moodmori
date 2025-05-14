@@ -109,10 +109,19 @@ const FavoritesPage = () => {
                   <FaTrash size={16} />
                 </button>
               </div>
-              
-              {favorite.note && (
+                {favorite.note && (
                 <div className="mt-4 bg-gray-50 p-3 border-l-2 border-black">
                   <p className="text-sm text-gray-800">{favorite.note}</p>
+                </div>
+              )}
+              
+              {favorite.image_url && (
+                <div className="mt-4">
+                  <img
+                    src={favorite.image_url}
+                    alt="Mood log photo"
+                    className="w-full max-w-xs rounded"
+                  />
                 </div>
               )}
             </div>
