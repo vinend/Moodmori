@@ -10,12 +10,21 @@ const MoodLogPage = () => {
   const [moods, setMoods] = useState([]);
   const [selectedMoodId, setSelectedMoodId] = useState(urlMoodId || '');
   const [note, setNote] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [moodLogs, setMoodLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [editingLogId, setEditingLogId] = useState(null);
   const [editNote, setEditNote] = useState('');
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedPhoto(file);
+    }
+  };
 
   // Fetch moods and logs on component mount
   useEffect(() => {
@@ -53,15 +62,26 @@ const MoodLogPage = () => {
     setError('');
     
     try {
-      const response = await api.post('/api/mood-logs', {
-        moodId: selectedMoodId,
-        note: note.trim() || null,
+      const formData = new FormData();
+      formData.append('moodId', selectedMoodId);
+      formData.append('note', note.trim() || '');
+      formData.append('isPublic', isPublic);
+      if (selectedPhoto) {
+        formData.append('photo', selectedPhoto);
+      }
+
+      const response = await api.post('/api/mood-logs', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       
       // Add new log to state and reset form
       setMoodLogs(prevLogs => [response.data.moodLog, ...prevLogs]);
       setSelectedMoodId('');
       setNote('');
+      setIsPublic(false);
+      setSelectedPhoto(null);
       
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred. Please try again.');
@@ -225,6 +245,32 @@ const MoodLogPage = () => {
               onChange={(e) => setNote(e.target.value)}
               placeholder="Write your thoughts here..."
             ></textarea>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-bold mb-2" htmlFor="photo">
+              PHOTO (OPTIONAL)
+            </label>
+            <input
+              type="file"
+              id="photo"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="w-full border-2 border-black p-2"
+            />
+          </div>
+
+          <div className="mb-4 flex items-center">
+            <input
+              type="checkbox"
+              id="isPublic"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="mr-2"
+            />
+            <label htmlFor="isPublic" className="text-sm font-bold">
+              MAKE THIS LOG PUBLIC
+            </label>
           </div>
           
           <button

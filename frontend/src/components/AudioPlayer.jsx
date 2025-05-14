@@ -14,25 +14,24 @@ const AudioPlayer = forwardRef(({ src, songName, onPrevious, onNext, onEnded }, 
   
   useEffect(() => {
     // Initialize audio
-    if (ref && ref.current) {
-      ref.current.volume = volume;
+    if (!ref || !ref.current) return; // Ensure ref is defined before accessing currentTime
+    ref.current.volume = volume;
       
-      const updateTime = () => setCurrentTime(ref.current.currentTime);
-      const updateDuration = () => setDuration(ref.current.duration);
+    const updateTime = () => setCurrentTime(ref.current?.currentTime || 0);
+    const updateDuration = () => setDuration(ref.current?.duration || 0);
       
-      ref.current.addEventListener('timeupdate', updateTime);
-      ref.current.addEventListener('loadedmetadata', updateDuration);
-      ref.current.addEventListener('ended', onEnded);
+    ref.current.addEventListener('timeupdate', updateTime);
+    ref.current.addEventListener('loadedmetadata', updateDuration);
+    ref.current.addEventListener('ended', onEnded);
       
-      return () => {
-        // Check if ref still exists when unmounting
-        if (ref && ref.current) {
-          ref.current.removeEventListener('timeupdate', updateTime);
-          ref.current.removeEventListener('loadedmetadata', updateDuration);
-          ref.current.removeEventListener('ended', onEnded);
-        }
-      };
-    }
+    return () => {
+      // Check if ref still exists when unmounting
+      if (ref && ref.current) {
+        ref.current.removeEventListener('timeupdate', updateTime);
+        ref.current.removeEventListener('loadedmetadata', updateDuration);
+        ref.current.removeEventListener('ended', onEnded);
+      }
+    };
   }, [onEnded, ref, volume]);
   
   useEffect(() => {

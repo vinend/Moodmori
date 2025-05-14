@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { API_URL } from '../constants';
 import { FaPlus, FaStar, FaRegStar } from 'react-icons/fa';
 import api from '../api/axiosConfig';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const DashboardPage = ({ user }) => {
   const [moods, setMoods] = useState([]);
   const [recentLogs, setRecentLogs] = useState([]);
+  const [publicLogs, setPublicLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [todaysMood, setTodaysMood] = useState(null);
@@ -40,6 +42,20 @@ const DashboardPage = ({ user }) => {
     };
     
     fetchDashboardData();
+  }, []);
+  useEffect(() => {
+    const fetchPublicLogs = async () => {
+      try {
+        const response = await api.get('/api/mood-logs/public');
+        // Server returns data.posts, not data.publicLogs
+        console.log('Public logs response:', response.data.posts);
+        setPublicLogs(response.data.posts);
+      } catch (err) {
+        console.error('Error fetching public logs:', err);
+      }
+    };
+
+    fetchPublicLogs();
   }, []);
 
   const toggleFavorite = async (moodLogId, isFavorite) => {
@@ -199,8 +215,49 @@ const DashboardPage = ({ user }) => {
           </Link>
         </div>
       </div>
+
+      {/* Public Logs Section */}
+      <div className="border-2 border-black p-6 mt-8">
+        <h2 className="text-xl font-bold mb-4">PUBLIC MOOD LOGS</h2>
+
+        {publicLogs?.length === 0 ? (
+          <p className="text-center py-6">No public mood logs available.</p>
+        ) : (
+          <div className="space-y-4">
+            {publicLogs?.map(log => (
+              <div key={log.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full ${getMoodColor(log.mood_name)} mr-4`}></div>
+                  <div>
+                    <p className="font-bold">{log.mood_name}</p>
+                    <p className="text-xs text-gray-600">
+                      {new Date(log.log_date).toLocaleDateString()} by {log.username}
+                    </p>
+                  </div>
+                </div>                {log.note && (
+                  <p className="mt-2 text-sm text-gray-800 pl-12">{log.note}</p>
+                )}
+                
+                {log.image_url && (
+                  <img
+                    src={log.image_url}
+                    alt="Mood log photo"
+                    className="mt-2 w-full max-w-xs rounded"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-export default DashboardPage;
+const DashboardPageWithBoundary = () => (
+  <ErrorBoundary>
+    <DashboardPage />
+  </ErrorBoundary>
+);
+
+export default DashboardPageWithBoundary;
