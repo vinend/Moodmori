@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FaStar, FaRegStar, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaStar, FaRegStar, FaEdit, FaTrash, FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown } from 'react-icons/fa';
 import api from '../api/axiosConfig';
 
 const MoodLogPage = () => {
@@ -88,7 +88,6 @@ const MoodLogPage = () => {
       setSubmitting(false);
     }
   };
-
   // Toggle favorite status of a log
   const toggleFavorite = async (moodLogId, isFavorite) => {
     try {
@@ -110,6 +109,80 @@ const MoodLogPage = () => {
       console.error('Error toggling favorite:', err);
       setError('Failed to update favorite status');
     }
+  };
+  
+  // Handle liking a log
+  const handleLike = async (log) => {
+    try {
+      // If user already liked, remove the reaction
+      if (log.user_reaction === true) {
+        await api.delete(`/api/mood-logs/${log.id}/reaction`);
+        
+        // Update UI optimistically - remove like
+        updateLogReaction(log.id, null, -1, 0);
+      } 
+      // If user had disliked, change to like
+      else if (log.user_reaction === false) {
+        await api.post(`/api/mood-logs/${log.id}/like`);
+        
+        // Update UI optimistically - remove dislike, add like
+        updateLogReaction(log.id, true, 1, -1);
+      } 
+      // If no reaction yet, add like
+      else {
+        await api.post(`/api/mood-logs/${log.id}/like`);
+        
+        // Update UI optimistically - add like
+        updateLogReaction(log.id, true, 1, 0);
+      }
+    } catch (err) {
+      console.error('Error handling like:', err);
+    }
+  };
+  
+  // Handle disliking a log
+  const handleDislike = async (log) => {
+    try {
+      // If user already disliked, remove the reaction
+      if (log.user_reaction === false) {
+        await api.delete(`/api/mood-logs/${log.id}/reaction`);
+        
+        // Update UI optimistically - remove dislike
+        updateLogReaction(log.id, null, 0, -1);
+      } 
+      // If user had liked, change to dislike
+      else if (log.user_reaction === true) {
+        await api.post(`/api/mood-logs/${log.id}/dislike`);
+        
+        // Update UI optimistically - remove like, add dislike
+        updateLogReaction(log.id, false, -1, 1);
+      } 
+      // If no reaction yet, add dislike
+      else {
+        await api.post(`/api/mood-logs/${log.id}/dislike`);
+        
+        // Update UI optimistically - add dislike
+        updateLogReaction(log.id, false, 0, 1);
+      }
+    } catch (err) {
+      console.error('Error handling dislike:', err);
+    }
+  };
+  
+  // Update the reaction state in the UI
+  const updateLogReaction = (logId, newReaction, likeChange, dislikeChange) => {
+    setMoodLogs(prevLogs => 
+      prevLogs.map(log => 
+        log.id === logId && log.is_public
+          ? { 
+              ...log, 
+              user_reaction: newReaction,
+              like_count: (log.like_count || 0) + likeChange,
+              dislike_count: (log.dislike_count || 0) + dislikeChange
+            } 
+          : log
+      )
+    );
   };
 
   // Delete a mood log
@@ -384,8 +457,7 @@ const MoodLogPage = () => {
                         >
                           <FaTrash size={18} />
                         </button>
-                      </div>
-                    </div>
+                      </div>                    </div>
                       {log.note && (
                       <p className="mt-2 text-sm text-gray-800 pl-12">{log.note}</p>
                     )}
@@ -397,6 +469,23 @@ const MoodLogPage = () => {
                         alt="Mood log photo"
                         className="mt-2 w-full max-w-xs rounded ml-12"
                       />
+                    )}
+                    
+                    {/* Like/Dislike section - only for public logs */}
+                    {log.is_public && (
+                      <div className="mt-3 flex items-center pl-12 pt-2 border-t border-gray-200">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center">
+                            <span className="mr-2 text-xs text-gray-600">Likes:</span>
+                            <span className="text-sm">{log.like_count || 0}</span>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <span className="mr-2 text-xs text-gray-600">Dislikes:</span>
+                            <span className="text-sm">{log.dislike_count || 0}</span>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
