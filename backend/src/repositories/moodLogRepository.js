@@ -3,8 +3,7 @@ const { query } = require('../database/connection');
 /**
  * MoodLog repository for database operations related to users' mood logs
  */
-class MoodLogRepository {
-  /**
+class MoodLogRepository {  /**
    * Create a new mood log entry
    * @param {number} userId - User ID
    * @param {number} moodId - Mood ID
@@ -12,14 +11,15 @@ class MoodLogRepository {
    * @param {Date|null} logDate - Date of the mood log (defaults to current date)
    * @param {boolean} isPublic - Whether this mood log is publicly visible
    * @param {string|null} location - Optional location data
+   * @param {string|null} imageUrl - Optional URL to the image
    * @returns {Promise<Object>} - Created mood log object
    */
-  async createMoodLog(userId, moodId, note = null, logDate = null, isPublic = false, location = null) {
+  async createMoodLog(userId, moodId, note = null, logDate = null, isPublic = false, location = null, imageUrl = null) {
     const result = await query(
-      `INSERT INTO mood_logs (user_id, mood_id, note, log_date, is_public, location) 
-       VALUES ($1, $2, $3, COALESCE($4, CURRENT_DATE), $5, $6) 
-       RETURNING id, user_id, mood_id, note, log_date, is_public, location`,
-      [userId, moodId, note, logDate, isPublic, location]
+      `INSERT INTO mood_logs (user_id, mood_id, note, log_date, is_public, location, image_url) 
+       VALUES ($1, $2, $3, COALESCE($4, CURRENT_DATE), $5, $6, $7) 
+       RETURNING id, user_id, mood_id, note, log_date, is_public, location, image_url`,
+      [userId, moodId, note, logDate, isPublic, location, imageUrl]
     );
     
     return result.rows[0];
@@ -120,9 +120,8 @@ class MoodLogRepository {
    * @param {number} userId - User ID (for validation)
    * @param {Object} data - Data to update (moodId, note, etc.)
    * @returns {Promise<Object|null>} - Updated mood log object or null if not found
-   */
-  async updateMoodLog(id, userId, data) {
-    const allowedFields = ['mood_id', 'note', 'is_public', 'location'];
+   */  async updateMoodLog(id, userId, data) {
+    const allowedFields = ['mood_id', 'note', 'is_public', 'location', 'image_url'];
     const fieldsToUpdate = Object.keys(data)
       .filter(key => allowedFields.includes(key))
       .filter(key => data[key] !== undefined);
@@ -141,7 +140,7 @@ class MoodLogRepository {
       `UPDATE mood_logs 
        SET ${setClause} 
        WHERE id = $1 AND user_id = $2 
-       RETURNING id, user_id, mood_id, note, log_date, is_public, location`,
+       RETURNING id, user_id, mood_id, note, log_date, is_public, location, image_url`,
       [id, userId, ...values]
     );
     

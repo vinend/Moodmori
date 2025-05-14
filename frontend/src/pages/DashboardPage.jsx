@@ -197,9 +197,16 @@ const DashboardPage = ({ user }) => {
                     {log.is_favorite ? <FaStar size={20} className="text-yellow-500" /> : <FaRegStar size={20} />}
                   </button>
                 </div>
-                
-                {log.note && (
+                  {log.note && (
                   <p className="mt-2 text-sm text-gray-800 pl-12">{log.note}</p>
+                )}
+                
+                {log.image_url && (
+                  <img
+                    src={log.image_url}
+                    alt="Mood log photo"
+                    className="mt-2 w-full max-w-xs rounded ml-12"
+                  />
                 )}
               </div>
             ))}
@@ -233,16 +240,16 @@ const DashboardPage = ({ user }) => {
                     <p className="text-xs text-gray-600">
                       {new Date(log.log_date).toLocaleDateString()} by {log.username}
                     </p>
-                  </div>
-                </div>                {log.note && (
+                  </div>                </div>
+                
+                {log.note && (
                   <p className="mt-2 text-sm text-gray-800 pl-12">{log.note}</p>
                 )}
-                
-                {log.image_url && (
+                  {log.image_url && (
                   <img
                     src={log.image_url}
                     alt="Mood log photo"
-                    className="mt-2 w-full max-w-xs rounded"
+                    className="mt-2 w-full max-w-xs rounded ml-12"
                   />
                 )}
               </div>

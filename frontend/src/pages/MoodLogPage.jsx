@@ -61,13 +61,12 @@ const MoodLogPage = () => {
     setSubmitting(true);
     setError('');
     
-    try {
-      const formData = new FormData();
+    try {      const formData = new FormData();
       formData.append('moodId', selectedMoodId);
       formData.append('note', note.trim() || '');
       formData.append('isPublic', isPublic);
       if (selectedPhoto) {
-        formData.append('photo', selectedPhoto);
+        formData.append('image', selectedPhoto); // Changed 'photo' to 'image' to match backend expectation
       }
 
       const response = await api.post('/api/mood-logs', formData, {
@@ -387,9 +386,17 @@ const MoodLogPage = () => {
                         </button>
                       </div>
                     </div>
-                    
-                    {log.note && (
+                      {log.note && (
                       <p className="mt-2 text-sm text-gray-800 pl-12">{log.note}</p>
+                    )}
+                    
+                    {/* Display image if available */}
+                    {log.image_url && (
+                      <img
+                        src={log.image_url}
+                        alt="Mood log photo"
+                        className="mt-2 w-full max-w-xs rounded ml-12"
+                      />
                     )}
                   </div>
                 )}
