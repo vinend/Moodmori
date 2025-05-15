@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../constants';
-import { FaPlus, FaStar, FaRegStar } from 'react-icons/fa';
+import { FaPlus, FaStar, FaRegStar, FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown } from 'react-icons/fa';
 import api from '../api/axiosConfig';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const DashboardPage = ({ user }) => {
   const [moods, setMoods] = useState([]);
   const [recentLogs, setRecentLogs] = useState([]);
+  const [publicLogs, setPublicLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [todaysMood, setTodaysMood] = useState(null);
@@ -41,7 +43,20 @@ const DashboardPage = ({ user }) => {
     
     fetchDashboardData();
   }, []);
+  useEffect(() => {
+    const fetchPublicLogs = async () => {
+      try {
+        const response = await api.get('/api/mood-logs/public');
+        // Server returns data.posts, not data.publicLogs
+        console.log('Public logs response:', response.data.posts);
+        setPublicLogs(response.data.posts);
+      } catch (err) {
+        console.error('Error fetching public logs:', err);
+      }
+    };
 
+    fetchPublicLogs();
+  }, []);
   const toggleFavorite = async (moodLogId, isFavorite) => {
     try {
       if (isFavorite) {
@@ -61,6 +76,101 @@ const DashboardPage = ({ user }) => {
     } catch (err) {
       console.error('Error toggling favorite:', err);
     }
+  };
+  
+  // Handle liking a log
+  const handleLike = async (log) => {
+    try {
+      // Check if the user is trying to like their own post
+      if (log.user_id === user?.id) {
+        console.log('You cannot like your own posts');
+        alert('You cannot like your own posts');
+        return;
+      }
+      
+      // If user already liked, remove the reaction
+      if (log.user_reaction === true) {
+        await api.delete(`/api/mood-logs/${log.id}/reaction`);
+        
+        // Update UI optimistically - remove like
+        updateLogReaction(log.id, null, -1, 0);
+      } 
+      // If user had disliked, change to like
+      else if (log.user_reaction === false) {
+        await api.post(`/api/mood-logs/${log.id}/like`);
+        
+        // Update UI optimistically - remove dislike, add like
+        updateLogReaction(log.id, true, 1, -1);
+      } 
+      // If no reaction yet, add like
+      else {
+        await api.post(`/api/mood-logs/${log.id}/like`);
+        
+        // Update UI optimistically - add like
+        updateLogReaction(log.id, true, 1, 0);
+      }
+    } catch (err) {
+      console.error('Error handling like:', err);
+      if (err.response && err.response.status === 400) {
+        alert(err.response.data.message || 'Cannot like this post');
+      }
+    }
+  };
+  
+  // Handle disliking a log
+  const handleDislike = async (log) => {
+    try {
+      // Check if the user is trying to dislike their own post
+      if (log.user_id === user?.id) {
+        console.log('You cannot dislike your own posts');
+        alert('You cannot dislike your own posts');
+        return;
+      }
+      
+      // If user already disliked, remove the reaction
+      if (log.user_reaction === false) {
+        await api.delete(`/api/mood-logs/${log.id}/reaction`);
+        
+        // Update UI optimistically - remove dislike
+        updateLogReaction(log.id, null, 0, -1);
+      } 
+      // If user had liked, change to dislike
+      else if (log.user_reaction === true) {
+        await api.post(`/api/mood-logs/${log.id}/dislike`);
+        
+        // Update UI optimistically - remove like, add dislike
+        updateLogReaction(log.id, false, -1, 1);
+      } 
+      // If no reaction yet, add dislike
+      else {
+        await api.post(`/api/mood-logs/${log.id}/dislike`);
+        
+        // Update UI optimistically - add dislike
+        updateLogReaction(log.id, false, 0, 1);
+      }
+    } catch (err) {
+      console.error('Error handling dislike:', err);
+      if (err.response && err.response.status === 400) {
+        alert(err.response.data.message || 'Cannot dislike this post');
+      }
+    }
+  };
+  
+  // Update the reaction state in the UI
+  const updateLogReaction = (logId, newReaction, likeChange, dislikeChange) => {
+    // Update public logs
+    setPublicLogs(prevLogs => 
+      prevLogs.map(log => 
+        log.id === logId 
+          ? { 
+              ...log, 
+              user_reaction: newReaction,
+              like_count: log.like_count + likeChange,
+              dislike_count: log.dislike_count + dislikeChange
+            } 
+          : log
+      )
+    );
   };
 
   const getMoodColor = (moodName) => {
@@ -181,9 +291,16 @@ const DashboardPage = ({ user }) => {
                     {log.is_favorite ? <FaStar size={20} className="text-yellow-500" /> : <FaRegStar size={20} />}
                   </button>
                 </div>
-                
-                {log.note && (
+                  {log.note && (
                   <p className="mt-2 text-sm text-gray-800 pl-12">{log.note}</p>
+                )}
+                
+                {log.image_url && (
+                  <img
+                    src={log.image_url}
+                    alt="Mood log photo"
+                    className="mt-2 w-full max-w-xs rounded ml-12"
+                  />
                 )}
               </div>
             ))}
@@ -199,8 +316,75 @@ const DashboardPage = ({ user }) => {
           </Link>
         </div>
       </div>
+
+      {/* Public Logs Section */}
+      <div className="border-2 border-black p-6 mt-8">
+        <h2 className="text-xl font-bold mb-4">PUBLIC MOOD LOGS</h2>
+
+        {publicLogs?.length === 0 ? (
+          <p className="text-center py-6">No public mood logs available.</p>
+        ) : (          <div className="space-y-4">
+            {publicLogs?.map(log => (
+              <div key={log.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className={`w-8 h-8 rounded-full ${getMoodColor(log.mood_name)} mr-4`}></div>
+                    <div>
+                      <p className="font-bold">{log.mood_name}</p>
+                      <p className="text-xs text-gray-600">
+                        {new Date(log.log_date).toLocaleDateString()} by {log.username}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center">
+                      <button 
+                        onClick={() => handleLike(log)} 
+                        className="mr-1 focus:outline-none"
+                      >
+                        {log.user_reaction === true ? 
+                          <FaThumbsUp className="text-blue-500" /> : 
+                          <FaRegThumbsUp />}
+                      </button>
+                      <span className="text-xs mr-3">{log.like_count || 0}</span>
+                      
+                      <button 
+                        onClick={() => handleDislike(log)} 
+                        className="mr-1 focus:outline-none"
+                      >
+                        {log.user_reaction === false ? 
+                          <FaThumbsDown className="text-red-500" /> : 
+                          <FaRegThumbsDown />}
+                      </button>
+                      <span className="text-xs">{log.dislike_count || 0}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {log.note && (
+                  <p className="mt-2 text-sm text-gray-800 pl-12">{log.note}</p>
+                )}
+                {log.image_url && (
+                  <img
+                    src={log.image_url}
+                    alt="Mood log photo"
+                    className="mt-2 w-full max-w-xs rounded ml-12"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-export default DashboardPage;
+const DashboardPageWithBoundary = () => (
+  <ErrorBoundary>
+    <DashboardPage user={JSON.parse(localStorage.getItem('user'))} />
+  </ErrorBoundary>
+);
+
+export default DashboardPageWithBoundary;

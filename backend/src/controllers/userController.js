@@ -43,7 +43,8 @@ class UserController {
         user: {
           id: newUser.id,
           username: newUser.username,
-          email: newUser.email
+          email: newUser.email,
+          profilePicture: newUser.profile_picture || null
         }
       });
     } catch (error) {
@@ -88,7 +89,8 @@ class UserController {
         user: {
           id: user.id,
           username: user.username,
-          email: user.email
+          email: user.email,
+          profilePicture: user.profile_picture
         }
       });
     } catch (error) {
@@ -139,7 +141,8 @@ class UserController {
         user: {
           id: user.id,
           username: user.username,
-          email: user.email
+          email: user.email,
+          profilePicture: user.profile_picture
         }
       });
     } catch (error) {
@@ -157,9 +160,15 @@ class UserController {
     try {
       const userId = req.session.userId;
       const { username, email } = req.body;
+      let profilePictureUrl = null;
+
+      // Check if a file was uploaded
+      if (req.file && req.file.path) {
+        profilePictureUrl = req.file.path;
+      }
 
       // Validate if there's anything to update
-      if (!username && !email) {
+      if (!username && !email && !profilePictureUrl) {
         return responseFormatter.error(res, 'No fields to update', 400);
       }
 
@@ -179,8 +188,14 @@ class UserController {
         }
       }
 
+      // Create update data object
+      const updateData = {};
+      if (username) updateData.username = username;
+      if (email) updateData.email = email;
+      if (profilePictureUrl) updateData.profile_picture = profilePictureUrl;
+
       // Update user
-      const updatedUser = await userRepository.updateUser(userId, { username, email });
+      const updatedUser = await userRepository.updateUser(userId, updateData);
 
       // Update session with new user info if needed
       if (username) req.session.username = username;
@@ -212,7 +227,7 @@ class UserController {
       }
 
       // Get user with password_hash
-      const user = await userRepository.findById(userId);
+      const user = await userRepository.findByIdWithPassword(userId);
       if (!user) {
         return responseFormatter.error(res, 'User not found', 404);
       }
@@ -234,6 +249,33 @@ class UserController {
       responseFormatter.error(res, 'Failed to update password', 500);
     }
   }
+
+  /**
+   * Get all users for group chat creation
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async getAllUsers(req, res) {
+    try {
+      const currentUserId = req.user.id;
+      
+      // Get all users except the current user
+      const users = await userRepository.getAllUsers();
+      
+      // Filter out sensitive information
+      const filteredUsers = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        profile_picture: user.profile_picture || null
+      }));
+      
+      responseFormatter.success(res, { users: filteredUsers });
+    } catch (error) {
+      console.error('Error in getAllUsers:', error);
+      responseFormatter.error(res, 'Failed to retrieve users', 500);
+    }
+  }
+
 }
 
 module.exports = new UserController();

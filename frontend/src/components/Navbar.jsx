@@ -1,14 +1,40 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaHome, FaBook, FaStar, FaChartBar, FaSignOutAlt } from 'react-icons/fa';
+import { FaHome, FaBook, FaStar, FaChartBar, FaSignOutAlt, FaCog, FaUser, FaComment } from 'react-icons/fa';
 
-const Navbar = ({ user, onLogout }) => {
+const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
   return (
     <nav className="bg-white border-b-2 border-black px-4 py-3">
       <div className="flex flex-col sm:flex-row items-center justify-between">
-        <div className="mb-3 sm:mb-0">
-          <h1 className="font-mono font-bold text-xl uppercase tracking-wider text-black">MOOD MORI</h1>
-          <p className="text-xs font-mono text-gray-600">{user?.username || 'Unknown User'}</p>
+        <div className="flex items-center mb-3 sm:mb-0">
+          {/* Profile Picture */}
+          <div className="w-10 h-10 border-2 border-black rounded-full overflow-hidden mr-3 flex-shrink-0">
+            {user?.profilePicture ? (
+              <img 
+                src={user.profilePicture} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <FaUser className="text-gray-500" />
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <h1 className="font-mono font-bold text-xl uppercase tracking-wider text-black">MOOD MORI</h1>
+            <p className="text-xs font-mono text-gray-600">{user?.username || 'Unknown User'}</p>
+          </div>
+          
+          {/* Messages Icon */}
+          <button 
+            onClick={onChatToggle}
+            className={`ml-4 p-2 rounded-full ${isChatOpen ? 'bg-gray-200' : ''}`}
+            title="Toggle Messages"
+          >
+            <FaComment className={`text-lg ${isChatOpen ? 'text-black' : 'text-gray-600'}`} />
+          </button>
         </div>
         
         <div className="flex items-center space-x-4 font-mono">
@@ -46,6 +72,15 @@ const Navbar = ({ user, onLogout }) => {
             }
           >
             <FaChartBar className="mr-1" /> Stats
+          </NavLink>
+
+          <NavLink 
+            to="/settings" 
+            className={({ isActive }) => 
+              `flex items-center px-3 py-1 text-black ${isActive ? 'border-2 border-black' : 'hover:border-2 hover:border-gray-400'}`
+            }
+          >
+            <FaCog className="mr-1" /> Settings
           </NavLink>
           
           <button 

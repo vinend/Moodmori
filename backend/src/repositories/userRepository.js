@@ -125,7 +125,21 @@ class UserRepository {
    */
   async findById(id) {
     const result = await query(
-      'SELECT id, username, email FROM users WHERE id = $1',
+      'SELECT id, username, email, profile_picture FROM users WHERE id = $1',
+      [id]
+    );
+    
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
+  /**
+   * Find a user by their ID including password hash
+   * @param {number} id - User ID
+   * @returns {Promise<Object|null>} - User object with password_hash or null if not found
+   */
+  async findByIdWithPassword(id) {
+    const result = await query(
+      'SELECT id, username, email, profile_picture, password_hash FROM users WHERE id = $1',
       [id]
     );
     
@@ -139,7 +153,7 @@ class UserRepository {
    * @returns {Promise<Object>} - Updated user object
    */
   async updateUser(id, data) {
-    const allowedFields = ['username', 'email'];
+    const allowedFields = ['username', 'email', 'profile_picture'];
     const fieldsToUpdate = Object.keys(data)
       .filter(key => allowedFields.includes(key))
       .filter(key => data[key] !== undefined);
@@ -155,7 +169,7 @@ class UserRepository {
       `UPDATE users 
        SET ${setClause} 
        WHERE id = $1 
-       RETURNING id, username, email`,
+       RETURNING id, username, email, profile_picture`,
       [id, ...values]
     );
     
@@ -177,7 +191,34 @@ class UserRepository {
     );
     
     return result.rowCount > 0;
+  }  
+  
+  /**
+   * Search users by username
+   * @param {string} searchTerm - Term to search for in usernames
+   * @returns {Promise<Array>} - List of matching users
+   */
+  async searchUsers(searchTerm) {
+    const result = await query(
+      'SELECT id, username, email, profile_picture FROM users WHERE username ILIKE $1 LIMIT 10',
+      [`%${searchTerm}%`]
+    );
+    
+    return result.rows;
   }
+  
+  /**
+   * Get all users
+   * @returns {Promise<Array>} - List of all users
+   */
+  async getAllUsers() {
+    const result = await query(
+      'SELECT id, username, profile_picture FROM users ORDER BY username'
+    );
+    
+    return result.rows;
+  }
+  
 }
 
 module.exports = new UserRepository();
