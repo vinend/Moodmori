@@ -128,11 +128,11 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
   };
 
   return (
-    <div className="container mx-auto p-4 font-mono">
-      <h1 className="text-2xl font-bold mb-6">SETTINGS</h1>
+    <div className="container mx-auto p-4 font-mono ">
+      <h1 className="text-2xl font-bold mb-6 ">SETTINGS</h1>
 
       {/* Profile Settings Section */}
-      <div className="border-2 border-black p-6 mb-8">
+      <div className="border-2 border-black p-6 mb-8 bg-gradient-to-r from-[#B449E980] to-[#72DDF780] rounded-[25px]">
         <h2 className="text-xl font-bold mb-4">PROFILE INFORMATION</h2>
 
         {profileMessage && (
@@ -196,7 +196,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
             <input
               id="username"
               type="text"
-              className="border-2 border-black w-full p-2 bg-white text-black"
+              className="border-2 border-black w-full p-2 bg-white text-black bg-gradient-to-r from-gray-300 to-gray-200"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
@@ -209,7 +209,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
             <input
               id="email"
               type="email"
-              className="border-2 border-black w-full p-2 bg-white text-black"
+              className="border-2 border-black w-full p-2 text-black bg-gradient-to-r from-gray-300 to-gray-200"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -226,7 +226,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
       </div>
 
       {/* Password Update Section - remains unchanged */}
-      <div className="border-2 border-black p-6">
+      <div className="border-2 border-black p-6 bg-gradient-to-r from-[#B449E980] to-[#72DDF780] rounded-[25px]">
         <h2 className="text-xl font-bold mb-4">CHANGE PASSWORD</h2>
 
         {passwordMessage && (
@@ -249,7 +249,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
             <input
               id="current-password"
               type="password"
-              className="border-2 border-black w-full p-2 bg-white text-black"
+              className="border-2 border-black w-full p-2 bg-white text-black bg-gradient-to-r from-gray-300 to-gray-200"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
@@ -263,7 +263,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
             <input
               id="new-password"
               type="password"
-              className="border-2 border-black w-full p-2 bg-white text-black"
+              className="border-2 border-black w-full p-2 bg-white text-black bg-gradient-to-r from-gray-300 to-gray-200"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
@@ -271,13 +271,13 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-bold mb-2" htmlFor="confirm-password">
+            <label className="block text-sm font-bold mb-2" htmlFor="confirm-password bg-gradient-to-r from-gray-300 to-gray-200">
               CONFIRM NEW PASSWORD
             </label>
             <input
               id="confirm-password"
               type="password"
-              className="border-2 border-black w-full p-2 bg-white text-black"
+              className="border-2 border-black w-full p-2 bg-white text-black bg-gradient-to-r from-gray-300 to-gray-200 "
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required

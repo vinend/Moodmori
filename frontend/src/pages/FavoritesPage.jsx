@@ -56,15 +56,15 @@ const FavoritesPage = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full py-12">
-        <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin mb-4"></div>
+        <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin mb-4 "></div>
         <p className="font-mono">Loading favorites...</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 font-mono">
-      <h1 className="text-2xl font-bold mb-6">FAVORITE MEMORIES</h1>
+    <div className="container mx-auto p-4 font-mono ">
+      <h1 className="text-2xl font-bold mb-6 ">FAVORITE MEMORIES</h1>
       
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-4 text-sm">
@@ -73,29 +73,29 @@ const FavoritesPage = () => {
       )}
       
       {favorites.length === 0 ? (
-        <div className="text-center border-2 border-black p-10">
+        <div className="text-center border-2 border-black p-10 ">
           <p className="mb-4">You don't have any favorites yet.</p>
           <p className="text-sm text-gray-600">
             Mark mood logs as favorites to see them here.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
           {favorites.map(favorite => (
             <div 
               key={favorite.id} 
-              className="border-2 border-black p-4"
+              className="border-2 border-black p-4 bg-gradient-to-r from-[#B449E980] to-[#72DDF780] rounded-[25px] shadow-2xl transition-transform transition-shadow duration-700 ease-in-out transform hover:scale-105 hover:shadow-[0_12px_25px_rgba(0,0,0,0.8)]"
             >
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between items-start ">
                 <div className="flex items-center">
                   <div 
                     className={`w-10 h-10 rounded-full ${getMoodColor(favorite.mood_name)} mr-4 flex items-center justify-center`}
                   >
-                    <FaStar size={16} className="text-white" />
+                    <FaStar size={16} className="text-black" />
                   </div>
                   <div>
                     <p className="font-bold text-lg">{favorite.mood_name}</p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-gray-900">
                       {new Date(favorite.log_date).toLocaleDateString()}
                     </p>
                   </div>
@@ -110,7 +110,7 @@ const FavoritesPage = () => {
                 </button>
               </div>
                 {favorite.note && (
-                <div className="mt-4 bg-gray-50 p-3 border-l-2 border-black">
+                <div className="mt-4 bg-gray-100 p-3 border-l-4 border-black">
                   <p className="text-sm text-gray-800">{favorite.note}</p>
                 </div>
               )}

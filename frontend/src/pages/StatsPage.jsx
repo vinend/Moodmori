@@ -134,7 +134,7 @@ const StatsPage = () => {
   const calendarData = generateCalendarData();
 
   return (
-    <div className="container mx-auto p-4 font-mono">
+    <div className="container mx-auto p-4 font-mono do">
       <h1 className="text-2xl font-bold mb-6">MOOD STATISTICS</h1>
       
       {error && (
@@ -148,25 +148,25 @@ const StatsPage = () => {
         <div className="flex border-2 border-black inline-flex">
           <button 
             onClick={() => setTimeframe('week')} 
-            className={`px-4 py-2 ${timeframe === 'week' ? 'bg-black text-white' : 'bg-white'}`}
+            className={`px-4 py-2 ${timeframe === 'week' ? 'border border-black bg-gradient-to-r from-[#B449E980] to-[#72DDF780] text-black' : 'bg-white'}`}
           >
             WEEK
           </button>
           <button 
             onClick={() => setTimeframe('month')} 
-            className={`px-4 py-2 ${timeframe === 'month' ? 'bg-black text-white' : 'bg-white'}`}
+            className={`px-4 py-2 ${timeframe === 'month' ? 'border border-black bg-gradient-to-r from-[#B449E980] to-[#72DDF780] text-black' : 'bg-white'}`}
           >
             MONTH
           </button>
           <button 
             onClick={() => setTimeframe('year')} 
-            className={`px-4 py-2 ${timeframe === 'year' ? 'bg-black text-white' : 'bg-white'}`}
+            className={`px-4 py-2 ${timeframe === 'year' ? 'border border-black bg-gradient-to-r from-[#B449E980] to-[#72DDF780] text-black' : 'bg-white'}`}
           >
             YEAR
           </button>
           <button 
             onClick={() => setTimeframe('all')} 
-            className={`px-4 py-2 ${timeframe === 'all' ? 'bg-black text-white' : 'bg-white'}`}
+            className={`px-4 py-2 ${timeframe === 'all' ? 'border border-black bg-gradient-to-r from-[#B449E980] to-[#72DDF780] text-black' : 'bg-white'}`}
           >
             ALL TIME
           </button>
@@ -175,7 +175,7 @@ const StatsPage = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Mood Distribution */}
-        <div className="border-2 border-black p-6">
+        <div className="border-2 border-black p-6 rounded-[25px] bg-gradient-to-r from-[#B449E980] to-[#72DDF780] " >
           <h2 className="text-xl font-bold mb-6">MOOD DISTRIBUTION</h2>
           
           {moodPercentages.length === 0 ? (
@@ -204,7 +204,7 @@ const StatsPage = () => {
         </div>
         
         {/* Mood Calendar */}
-        <div className="border-2 border-black p-6">
+        <div className="border-2 border-black p-6 rounded-[25px] bg-gradient-to-r from-[#B449E980] to-[#72DDF780]" >
           <h2 className="text-xl font-bold mb-6">MOOD CALENDAR</h2>
           
           <div className="grid grid-cols-7 gap-1">
@@ -215,7 +215,7 @@ const StatsPage = () => {
               </div>
             ))}
             
-            {/* Calendar days */}
+            {/* Calendar days */  }
             {calendarData.map((day, index) => {
               const mainMood = day.logs.length > 0 ? day.logs[0] : null;
               
@@ -244,7 +244,7 @@ const StatsPage = () => {
         </div>
         
         {/* Mood Frequency */}
-        <div className="border-2 border-black p-6">
+        <div className="border-2 border-black p-6 rounded-[25px] bg-gradient-to-r from-[#B449E980] to-[#72DDF780] ">
           <h2 className="text-xl font-bold mb-6">MOOD FREQUENCY</h2>
           
           <p className="mb-4">Total entries: {moodLogs.length}</p>

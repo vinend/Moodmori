@@ -273,7 +273,7 @@ const MoodLogPage = () => {
       <h1 className="text-2xl font-bold mb-6">MOOD JOURNAL</h1>
 
       {/* Log New Mood Form */}
-      <div className="border-2 border-black p-6 mb-8">
+      <div className="border-2 border-black p-6 mb-8 rounded-[25px] bg-gradient-to-r from-[#B449E990] to-[#72DDF790]">
         <h2 className="text-xl font-bold mb-4">LOG YOUR MOOD</h2>
         
         {error && (
@@ -288,7 +288,7 @@ const MoodLogPage = () => {
               HOW ARE YOU FEELING?
             </label>
             
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 ">
               {moods.map(mood => (
                 <button
                   key={mood.id}
@@ -296,8 +296,8 @@ const MoodLogPage = () => {
                   onClick={() => setSelectedMoodId(mood.id.toString())}
                   className={`p-2 border-2 ${
                     selectedMoodId === mood.id.toString() 
-                      ? 'border-black' 
-                      : 'border-gray-300'
+                      ? 'border-gray-100' 
+                      : 'border-black'
                   } ${getMoodColor(mood.mood_name)}`}
                 >
                   {mood.mood_name}
@@ -312,15 +312,15 @@ const MoodLogPage = () => {
             </label>
             <textarea
               id="note"
-              className="border-2 border-black w-full p-2 h-24 bg-white text-black"
+              className="border-2 border-black w-full p-2 h-24 bg-gradient-to-r from-gray-300 to-gray-200 text-black"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Write your thoughts here..."
             ></textarea>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-bold mb-2" htmlFor="photo">
+          <div className="mb-4 ">
+            <label className="block text-sm font-bold mb-2" htmlFor="photo ">
               PHOTO (OPTIONAL)
             </label>
             <input
@@ -356,15 +356,15 @@ const MoodLogPage = () => {
       </div>
 
       {/* Mood History */}
-      <div className="border-2 border-black p-6">
-        <h2 className="text-xl font-bold mb-4">YOUR MOOD HISTORY</h2>
+      <div className="border-2 border-black p-6 rounded-[25px] bg-gradient-to-r from-[#B449E980] to-[#72DDF780]">
+        <h2 className="text-xl font-bold mb-4 ">YOUR MOOD HISTORY</h2>
         
         {moodLogs.length === 0 ? (
           <p className="text-center py-6">No mood logs yet. Start by logging your mood above!</p>
         ) : (
           <div className="space-y-4">
             {moodLogs.map(log => (
-              <div key={log.id} className="border-2 border-gray-200 p-4">
+              <div key={log.id} className="border-2 border-black rounded-[25px] p-4">
                 {editingLogId === log.id ? (
                   /* Edit Mode */
                   <div>
