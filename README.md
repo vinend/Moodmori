@@ -1,47 +1,77 @@
-# MOOD MORI
+<div align="center">
 
-MOOD MORI is a social-based Emotion Log platform that helps users track and share their emotional journey. The application features a comprehensive chat system, group functionality, and location/image sharing capabilities.
+# 🌈 MOOD MORI
 
-## Team Members
+### Share Your Emotional Journey, Connect with Others
 
-- Andi Muhammad Alvin Farhansyah (2306161933)
-- Aliya Rizqiningrum Salamun (2306161813)
-- Raka Arrayan Muttaqien (2306161800)
-- Filaga Tifira Muthi (2306208445)
+![Tech Stack](https://skillicons.dev/icons?i=react,vite,tailwind,nodejs,express,postgres)
 
-## Features
+</div>
 
+## 🚀 Tech Stack
+
+### 🎨 Frontend
+```javascript
+const frontendStack = {
+  framework: "React v19",
+  bundler: "Vite",
+  styling: "TailwindCSS",
+  routing: "React Router DOM v7",
+  icons: "React Icons v5",
+  networking: "Axios v1.9"
+}
+```
+
+### ⚙️ Backend
+```javascript
+const backendStack = {
+  runtime: "Node.js",
+  framework: "Express v4.21",
+  database: "PostgreSQL",
+  storage: "Cloudinary",
+  security: {
+    authentication: "bcrypt",
+    sessions: "express-session"
+  },
+  uploads: "Multer"
+}
+```
+
+## 💫 What is MOOD MORI?
+
+MOOD MORI is a social-based Emotion Log platform that helps users track and share their emotional journey. The application combines personal mood tracking with social features to create a supportive environment for emotional well-being.
+
+## 👥 Team Members
+
+| Role | Name | Student ID |
+|------|------|------------|
+| Frontend Lead | Andi Muhammad Alvin Farhansyah | 2306161933 |
+| Backend Lead | Aliya Rizqiningrum Salamun | 2306161813 |
+| Database Engineer | Raka Arrayan Muttaqien | 2306161800 |
+| UI/UX Designer | Filaga Tifira Muthi | 2306208445 |
+
+## ✨ Key Features
+
+### 🎯 Core Features
 - **Emotion Logging**: Track and monitor your emotional state
-- **Chat System**:
-  - Personal chat functionality
-  - Group chat support
-  - Image sharing capabilities
-  - Location sharing
-- **Social Features**:
-  - User profiles
-  - Group system
-  - Favorites system
-  - Comments and interactions
-- **Dashboard**: Visual representation of mood patterns and statistics
-- **Authentication**: Secure user registration and login system
+- **Rich Dashboard**: Visual representation of mood patterns
+- **Secure Auth**: Protected routes and session management
 
-## Tech Stack
+### 💬 Social Features
+```mermaid
+graph TD
+    A[User] -->|Creates| B[Mood Log]
+    B -->|Can| C[Share Location]
+    B -->|Can| D[Attach Images]
+    B -->|Receives| E[Comments]
+    B -->|Gets| F[Reactions]
+    A -->|Can| G[Add to Favorites]
+```
 
-### Frontend
-- React (v19)
-- Vite
-- TailwindCSS
-- React Router DOM
-- React Icons
-- Axios for API calls
-
-### Backend
-- Node.js with Express
-- PostgreSQL database
-- Cloudinary for image storage
-- Authentication with bcrypt
-- Session management
-- Multer for file uploads
+### 💭 Chat System
+- Personal chat with image sharing
+- Group chat functionality
+- Real-time location sharing
 
 ## Project Structure
 
@@ -63,45 +93,79 @@ MOOD MORI is a social-based Emotion Log platform that helps users track and shar
     └── index.html
 ```
 
-## Setup Instructions
+## 🛠️ Quick Start
 
-### Prerequisites
+[![Node.js](https://img.shields.io/badge/Node.js->=16-success?logo=node.js&logoColor=white)](https://nodejs.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL->=14-blue?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![npm](https://img.shields.io/badge/npm->=8-red?logo=npm&logoColor=white)](https://www.npmjs.com)
+
+### 📋 Prerequisites
 - Node.js
 - PostgreSQL
 - npm or yarn
 
-### Backend Setup
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a .env file with necessary configurations
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
+### 🔧 Installation
 
-### Frontend Setup
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+#### Backend Setup
+```bash
+# Clone repository
+git clone <repository-url>
 
-## Database Schema
+# Navigate to backend
+cd backend
 
-### Entity Relationship Diagram
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configurations
+
+# Start development server
+npm run dev
+```
+
+#### Frontend Setup
+```bash
+# Navigate to frontend
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+### 🌐 Development Workflow
+
+```mermaid
+graph LR
+    A[Code Changes] -->|Push| B[Git Repository]
+    B -->|Deploy| C[Production]
+    B -->|Review| D[Code Review]
+    D -->|Approve| C
+    D -->|Request Changes| A
+```
+
+### 🎮 Available Scripts
+
+#### Backend
+```bash
+npm run dev      # Start development server
+npm start        # Start production server
+```
+
+#### Frontend
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run preview  # Preview production build
+```
+
+## 📊 Database Architecture
+
+### 🔄 Entity Relationship Diagram
 
 ```mermaid
 erDiagram
@@ -304,3 +368,91 @@ The database is optimized with indexes on frequently accessed columns:
 - Protected routes
 - Session management
 - File upload validation
+
+## 🔐 Environment Variables
+
+### Backend (.env)
+```bash
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=mood_mori_db
+DB_USER=your_username
+DB_PASSWORD=your_password
+
+# Authentication
+JWT_SECRET=your_jwt_secret
+SESSION_SECRET=your_session_secret
+
+# Cloudinary Configuration
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+### Frontend (.env)
+```bash
+VITE_API_URL=http://localhost:3000
+VITE_CLOUDINARY_URL=your_cloudinary_url
+```
+
+## 📱 Application Features
+
+```mermaid
+mindmap
+  root((MOOD MORI))
+    Emotion Tracking
+      Daily Logs
+      Mood Analytics
+      Image Attachments
+      Location Tagging
+    Social Features
+      Comments
+      Reactions
+      Favorites
+      Sharing
+    Chat System
+      Personal Chat
+      Group Chat
+      Media Sharing
+      Location Sharing
+    Security
+      Authentication
+      Authorization
+      Data Protection
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+3. Commit your changes
+   ```bash
+   git commit -m 'Add some AmazingFeature'
+   ```
+4. Push to the branch
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
+5. Open a Pull Request
+
+## 📫 Contact
+
+- **Andi Muhammad Alvin Farhansyah** - [GitHub](https://github.com/yourusername)
+- **Aliya Rizqiningrum Salamun** - [GitHub](https://github.com/yourusername)
+- **Raka Arrayan Muttaqien** - [GitHub](https://github.com/yourusername)
+- **Filaga Tifira Muthi** - [GitHub](https://github.com/yourusername)
+
+Project Link: [https://github.com/yourusername/mood-mori](https://github.com/yourusername/mood-mori)
+
+---
+<div align="center">
+Made with 💖 by Team MOOD MORI
+</div>
