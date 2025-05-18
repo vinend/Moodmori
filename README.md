@@ -445,10 +445,10 @@ mindmap
 
 ## 📫 Contact
 
-- **Andi Muhammad Alvin Farhansyah** - [GitHub](https://github.com/yourusername)
-- **Aliya Rizqiningrum Salamun** - [GitHub](https://github.com/yourusername)
-- **Raka Arrayan Muttaqien** - [GitHub](https://github.com/yourusername)
-- **Filaga Tifira Muthi** - [GitHub](https://github.com/yourusername)
+- **Andi Muhammad Alvin Farhansyah** - [GitHub](https://github.com/vinend)
+- **Aliya Rizqiningrum Salamun** - [GitHub](https://github.com/aliyars)
+- **Raka Arrayan Muttaqien** - [GitHub](https://github.com/raka-arrayan)
+- **Filaga Tifira Muthi** - [GitHub](https://github.com/Filaga)
 
 Project Link: [https://github.com/yourusername/mood-mori](https://github.com/yourusername/mood-mori)
 
