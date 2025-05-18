@@ -1,86 +1,306 @@
-# Moodmori
+# MOOD MORI
 
-Moodmori is a project written primarily in JavaScript with supplemental CSS. It aims to provide functionality around mood tracking, journaling, or other related features. Below is a guide to help contributors and users understand and utilize the repository.
+MOOD MORI is a social-based Emotion Log platform that helps users track and share their emotional journey. The application features a comprehensive chat system, group functionality, and location/image sharing capabilities.
 
-## Table of Contents
+## Team Members
 
-1. [Overview](#overview)
-2. [Features](#features)
-3. [Getting Started](#getting-started)
-   - [Prerequisites](#prerequisites)
-   - [Installation](#installation)
-4. [Usage](#usage)
-5. [Contributing](#contributing)
-6. [License](#license)
-
-## Overview
-
-Moodmori is designed to help users track their moods, reflect on their daily experiences, and gain insights into their emotional well-being. This repository is a robust and user-friendly application built with a focus on simplicity and functionality.
+- Andi Muhammad Alvin Farhansyah (2306161933)
+- Aliya Rizqiningrum Salamun (2306161813)
+- Raka Arrayan Muttaqien (2306161800)
+- Filaga Tifira Muthi (2306208445)
 
 ## Features
 
-- **Mood Tracking**: Allows users to log their moods daily.
-- **Customizable Insights**: Provides analytics or insights based on mood data.
-- **Responsive Design**: Optimized for multiple devices using CSS.
-- **Future Enhancements**: Potential integration with third-party APIs for extended features.
+- **Emotion Logging**: Track and monitor your emotional state
+- **Chat System**:
+  - Personal chat functionality
+  - Group chat support
+  - Image sharing capabilities
+  - Location sharing
+- **Social Features**:
+  - User profiles
+  - Group system
+  - Favorites system
+  - Comments and interactions
+- **Dashboard**: Visual representation of mood patterns and statistics
+- **Authentication**: Secure user registration and login system
 
-## Getting Started
+## Tech Stack
+
+### Frontend
+- React (v19)
+- Vite
+- TailwindCSS
+- React Router DOM
+- React Icons
+- Axios for API calls
+
+### Backend
+- Node.js with Express
+- PostgreSQL database
+- Cloudinary for image storage
+- Authentication with bcrypt
+- Session management
+- Multer for file uploads
+
+## Project Structure
+
+```
+├── backend/
+│   ├── src/
+│   │   ├── controllers/     # Request handlers
+│   │   ├── repositories/    # Database queries
+│   │   ├── routes/         # API routes
+│   │   ├── utils/          # Helper functions
+│   │   └── database/       # Database connection
+│   └── index.js            # Entry point
+└── frontend/
+    ├── src/
+    │   ├── api/            # API configurations
+    │   ├── components/     # Reusable UI components
+    │   ├── pages/          # Application views
+    │   └── assets/         # Static resources
+    └── index.html
+```
+
+## Setup Instructions
 
 ### Prerequisites
+- Node.js
+- PostgreSQL
+- npm or yarn
 
-To run this project locally, you’ll need:
-
-- **Node.js** (v14 or higher)
-- **npm** (Node Package Manager, comes with Node.js)
-- A modern web browser
-
-### Installation
-
-1. Clone this repository:
+### Backend Setup
+1. Navigate to the backend directory:
    ```bash
-   git clone https://github.com/vinend/Moodmori.git
+   cd backend
    ```
-2. Navigate into the project directory:
-   ```bash
-   cd Moodmori
-   ```
-3. Install the necessary dependencies:
+2. Install dependencies:
    ```bash
    npm install
    ```
-
-## Usage
-
-To start the application locally:
-
-1. Run the development server:
+3. Create a .env file with necessary configurations
+4. Start the development server:
    ```bash
-   npm start
-   ```
-2. Open your browser and navigate to:
-   ```
-   http://localhost:3000
+   npm run dev
    ```
 
-Feel free to explore and contribute to the project!
-
-## Contributing
-
-We welcome contributions! If you would like to contribute:
-
-1. Fork this repository.
-2. Create a new branch for your feature or bug fix:
+### Frontend Setup
+1. Navigate to the frontend directory:
    ```bash
-   git checkout -b feature-name
+   cd frontend
    ```
-3. Commit your changes and push them:
+2. Install dependencies:
    ```bash
-   git push origin feature-name
+   npm install
    ```
-4. Open a pull request with a description of your changes.
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-## License
+## Database Schema
 
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
+### Entity Relationship Diagram
 
----
+```mermaid
+erDiagram
+    USERS ||--o{ MOOD_LOGS : creates
+    USERS ||--o{ MOOD_COMMENTS : writes
+    USERS ||--o{ FAVORITES : saves
+    USERS ||--o{ MOOD_REACTIONS : makes
+    USERS ||--o{ DIRECT_MESSAGES : sends
+    USERS ||--o{ GROUP_MEMBERS : joins
+    USERS ||--o{ GROUP_MESSAGES : sends
+    MOODS ||--o{ MOOD_LOGS : "has type"
+    MOOD_LOGS ||--o{ MOOD_COMMENTS : receives
+    MOOD_LOGS ||--o{ FAVORITES : "saved in"
+    MOOD_LOGS ||--o{ MOOD_REACTIONS : receives
+    GROUP_CHATS ||--o{ GROUP_MEMBERS : contains
+    GROUP_CHATS ||--o{ GROUP_MESSAGES : contains
+    USERS ||--o{ CALENDAR_ANALYTICS : tracks
+    MOODS ||--o{ CALENDAR_ANALYTICS : "analyzes"
+```
+
+### Core Entities
+
+#### Users
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    profile_picture TEXT,
+    location TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Moods
+```sql
+CREATE TABLE moods (
+    id SERIAL PRIMARY KEY,
+    mood_name VARCHAR(30) UNIQUE NOT NULL,
+    icon TEXT,
+    color VARCHAR(10)
+);
+```
+
+Predefined moods with their visual representations:
+| Mood Name  | Icon | Color   |
+|------------|------|---------|
+| HAPPY      | 😊   | #FFD700 |
+| SAD        | 😢   | #6495ED |
+| ANGRY      | 😠   | #FF4500 |
+| AFRAID     | 😨   | #9370DB |
+| NEUTRAL    | 😐   | #A9A9A9 |
+| MANIC      | 😆   | #FF1493 |
+| DEPRESSED  | 😞   | #4682B4 |
+| FURIOUS    | 😡   | #DC143C |
+| TERRIFIED  | 😱   | #800080 |
+| CALM       | 😌   | #20B2AA |
+
+#### Mood Logs
+```sql
+CREATE TABLE mood_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    mood_id INTEGER REFERENCES moods(id),
+    note TEXT,
+    location TEXT,
+    image_url TEXT,
+    is_public BOOLEAN DEFAULT FALSE,
+    log_date DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Social Features
+
+#### Mood Comments
+```sql
+CREATE TABLE mood_comments (
+    id SERIAL PRIMARY KEY,
+    mood_log_id INTEGER REFERENCES mood_logs(id),
+    user_id INTEGER REFERENCES users(id),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Favorites
+```sql
+CREATE TABLE favorites (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    mood_log_id INTEGER REFERENCES mood_logs(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Mood Reactions
+```sql
+CREATE TABLE mood_reactions (
+    id SERIAL PRIMARY KEY,
+    mood_log_id INTEGER REFERENCES mood_logs(id),
+    user_id INTEGER REFERENCES users(id),
+    is_like BOOLEAN NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Chat System
+
+#### Direct Messages
+```sql
+CREATE TABLE direct_messages (
+    id SERIAL PRIMARY KEY,
+    sender_id INTEGER REFERENCES users(id),
+    recipient_id INTEGER REFERENCES users(id),
+    content TEXT NOT NULL,
+    location TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Group Chats
+```sql
+CREATE TABLE group_chats (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    creator_id INTEGER REFERENCES users(id),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Group Members
+```sql
+CREATE TABLE group_members (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER REFERENCES group_chats(id),
+    user_id INTEGER REFERENCES users(id),
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### Group Messages
+```sql
+CREATE TABLE group_messages (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER REFERENCES group_chats(id),
+    sender_id INTEGER REFERENCES users(id),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Analytics
+
+#### Calendar Analytics
+```sql
+CREATE TABLE calendar_analytics (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    mood_id INTEGER REFERENCES moods(id),
+    mood_date DATE,
+    mood_count INTEGER DEFAULT 1
+);
+```
+
+## Database Optimization
+The database is optimized with indexes on frequently accessed columns:
+- Mood logs: user_id, mood_id, is_public, log_date
+- Reactions: mood_log_id, user_id
+- Messages: sender_id, recipient_id
+- Group messages: group_id
+- Favorites: user_id, mood_log_id
+- Comments: mood_log_id, user_id
+
+## Features Overview
+
+### Emotion Logging
+- Create and track daily mood entries
+- Add context and notes to mood logs
+- View historical mood patterns
+- Add images to mood entries
+
+### Chat System
+- Real-time personal and group messaging
+- Image sharing in chats
+- Location sharing capabilities
+- Group chat management features
+
+### Social Features
+- Create and join groups
+- Add posts to favorites
+- Comment on mood logs
+- User profile customization
+
+### Security Features
+- Secure authentication
+- Protected routes
+- Session management
+- File upload validation
