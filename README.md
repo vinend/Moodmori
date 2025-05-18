@@ -45,9 +45,9 @@ MOOD MORI is a social-based Emotion Log platform that helps users track and shar
 
 | Role | Name | Student ID |
 |------|------|------------|
-| Frontend Lead | Andi Muhammad Alvin Farhansyah | 2306161933 |
-| Backend Lead | Aliya Rizqiningrum Salamun | 2306161813 |
-| Database Engineer | Raka Arrayan Muttaqien | 2306161800 |
+| Fullstack Lead | Andi Muhammad Alvin Farhansyah | 2306161933 |
+| UI/UX Designer  | Aliya Rizqiningrum Salamun | 2306161813 |
+| UI/UX Designer  | Raka Arrayan Muttaqien | 2306161800 |
 | UI/UX Designer | Filaga Tifira Muthi | 2306208445 |
 
 ## ✨ Key Features
