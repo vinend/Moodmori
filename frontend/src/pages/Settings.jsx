@@ -133,7 +133,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
 
       {/* Profile Settings Section */}
       <div className="border-2 border-black p-6 mb-8 bg-gradient-to-r from-[#B449E980] to-[#72DDF780] rounded-[25px]">
-        <h2 className="text-xl font-bold mb-4">PROFILE INFORMATION</h2>
+        <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">PROFILE INFORMATION</h2>
 
         {profileMessage && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 text-sm">
@@ -227,7 +227,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
 
       {/* Password Update Section - remains unchanged */}
       <div className="border-2 border-black p-6 bg-gradient-to-r from-[#B449E980] to-[#72DDF780] rounded-[25px]">
-        <h2 className="text-xl font-bold mb-4">CHANGE PASSWORD</h2>
+        <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">CHANGE PASSWORD</h2>
 
         {passwordMessage && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 text-sm">

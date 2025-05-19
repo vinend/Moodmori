@@ -274,7 +274,7 @@ const MoodLogPage = () => {
 
       {/* Log New Mood Form */}
       <div className="border-2 border-black p-6 mb-8 rounded-[25px] bg-gradient-to-r from-[#B449E990] to-[#72DDF790]">
-        <h2 className="text-xl font-bold mb-4">LOG YOUR MOOD</h2>
+        <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">LOG YOUR MOOD</h2>
         
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-4 text-sm">
@@ -357,7 +357,7 @@ const MoodLogPage = () => {
 
       {/* Mood History */}
       <div className="border-2 border-black p-6 rounded-[25px] bg-gradient-to-r from-[#B449E980] to-[#72DDF780]">
-        <h2 className="text-xl font-bold mb-4 ">YOUR MOOD HISTORY</h2>
+        <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">YOUR MOOD HISTORY</h2>
         
         {moodLogs.length === 0 ? (
           <p className="text-center py-6">No mood logs yet. Start by logging your mood above!</p>
