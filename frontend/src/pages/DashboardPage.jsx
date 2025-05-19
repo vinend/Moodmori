@@ -27,10 +27,18 @@ const DashboardPage = ({ user }) => {
         setRecentLogs(logsResponse.data.moodLogs);
         
         // Check if there's a mood logged for today
-        const today = new Date().toISOString().split('T')[0];
-        const todayLog = logsResponse.data.moodLogs.find(log => 
-          new Date(log.log_date).toISOString().split('T')[0] === today
-        );
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of day
+
+        const todayLog = logsResponse.data.moodLogs.find(log => {
+          const logDate = new Date(log.log_date);
+          logDate.setHours(0, 0, 0, 0); // Set to start of day
+          return logDate.getTime() === today.getTime();
+        });
+
+        console.log('Today:', today);
+        console.log('Today\'s log:', todayLog);
+        console.log('All logs:', logsResponse.data.moodLogs);
         
         setTodaysMood(todayLog);
       } catch (err) {
