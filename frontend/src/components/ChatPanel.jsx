@@ -2,7 +2,27 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaChevronRight, FaUser, FaComment, FaSearch, FaPlus, FaTimes, FaUsers, FaImage, FaMapMarkerAlt, FaPaperclip } from 'react-icons/fa';
 import api from '../api/axiosConfig';
 
-const ChatPanel = ({ isOpen, onClose, user }) => {  
+const ChatPanel = ({ isOpen, onClose, user }) => {
+  const [scrollPosition, setScrollPosition] = useState(0);
+
+  // Add scroll event listener
+  useEffect(() => {
+    // Throttled scroll handler for better performance
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollPosition(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // States for panel management
   const [activeChat, setActiveChat] = useState(() => {
     // Try to recover activeChat from localStorage when component mounts
@@ -1020,9 +1040,29 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
   // This allows the active chat to persist
 
   return (
-    <div className={`fixed left-0 top-[64px] bottom-0 w-64 bg-white border-r-2 border-black shadow-lg z-30 flex flex-col font-mono transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <>
+      {/* Chat Toggle Button */}
+      <button 
+        onClick={onClose}
+        className={`fixed left-3 cursor-pointer ${scrollPosition > 64 ? 'top-5' : 'top-20'} z-30 bg-black text-white p-2 rounded-full shadow-lg transition-all duration-300 hover:bg-gray-800 hover:scale-110 active:scale-95 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        aria-label="Open chat"
+      >
+        <FaComment size={20} />
+      </button>
+
+      {/* Chat Panel */}
+      <div 
+        className={`fixed left-0 w-80 bg-white border-r-2 border-black shadow-lg z-30 flex flex-col font-mono transition-all duration-300 transform ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        style={{
+          top: scrollPosition > 64 ? '0' : '64px',
+          bottom: '0',
+          transition: 'transform 300ms ease-in-out, top 150ms ease-in-out'
+        }}
+      >
       {/* Panel Header */}
-      <div className="p-3 border-b-2 border-black flex items-center justify-between bg-white sticky top-0">
+      <div className="p-3 border-t-2 border-b-2 border-black flex items-center justify-between bg-white sticky top-0">
         <h2 className="font-bold text-lg">MESSAGES</h2>
         <button 
           onClick={onClose}
@@ -1673,7 +1713,8 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
