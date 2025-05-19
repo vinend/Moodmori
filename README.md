@@ -450,8 +450,6 @@ mindmap
 - **Raka Arrayan Muttaqien** - [GitHub](https://github.com/yourusername)
 - **Filaga Tifira Muthi** - [GitHub](https://github.com/yourusername)
 
-Project Link: [https://github.com/yourusername/mood-mori](https://github.com/yourusername/mood-mori)
-
 ---
 <div align="center">
 Made with 💖 by Team MOOD MORI
