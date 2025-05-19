@@ -1043,8 +1043,8 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
     <>
       {/* Chat Toggle Button */}
       <button 
-        onClick={onClose}
-        className={`fixed left-3 cursor-pointer ${scrollPosition > 64 ? 'top-5' : 'top-20'} z-30 bg-black text-white p-2 rounded-full shadow-lg transition-all duration-300 hover:bg-gray-800 hover:scale-110 active:scale-95 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        onClick={() => onClose()} // Call onClose to trigger the toggle
+        className={`fixed left-3 cursor-pointer ${scrollPosition > 64 ? 'top-5 opacity-100' : 'opacity-0 pointer-events-none'} z-30 bg-black text-white p-2 rounded-full shadow-lg transition-all duration-300 hover:bg-gray-800 hover:scale-110 active:scale-95 ${isOpen ? 'opacity-0 pointer-events-none' : ''}`}
         aria-label="Open chat"
       >
         <FaComment size={20} />
@@ -1065,7 +1065,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       <div className="p-3 border-t-2 border-b-2 border-black flex items-center justify-between bg-white sticky top-0">
         <h2 className="font-bold text-lg">MESSAGES</h2>
         <button 
-          onClick={onClose}
+          onClick={() => onClose()} // Call onClose to trigger the toggle
           className="p-1 hover:bg-gray-200 rounded"
           aria-label="Close chat panel"
         >
