@@ -1641,14 +1641,6 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   CREATE GROUP ({selectedUsers.length}/2 selected)
                 </button>
                 
-                <div className="mt-2 p-2 bg-gray-100 text-xs">
-                  <p className="font-bold">Debug Info:</p>
-                  <p>Group Name: {groupName || 'Not set'}</p>
-                  <p>Selected Users: {selectedUsers.length}</p>
-                  <p>Your User ID: {user?.id}</p>
-                  <p className="mt-1">Selected User IDs: {selectedUsers.join(', ')}</p>
-                </div>
-                
                 {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
               </div>
             ) : (
