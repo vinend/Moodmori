@@ -176,33 +176,16 @@ const FavoritesPage = () => {
                   <FaTrash size={18} className="group-hover:animate-shake" />
                 </button>
               </div>
-<<<<<<< HEAD
-                {favorite.note && (
-                <div className="mt-4 bg-gray-50 p-3 border-l-2 border-black">
-=======
               
               {favorite.note && (
                 <div className="mt-4 bg-gray-50 p-3 border-l-2 border-black animate-fade-in-right" style={{ animationDelay: `${favorites.indexOf(favorite) * 0.1 + 0.3}s` }}>
->>>>>>> cf1c3ec143cc9d54168bc4ff502e5d1decef4d27
                   <p className="text-sm text-gray-800">{favorite.note}</p>
                 </div>
               )}
               
-<<<<<<< HEAD
-              {favorite.image_url && (
-                <div className="mt-4">
-                  <img
-                    src={favorite.image_url}
-                    alt="Mood log photo"
-                    className="w-full max-w-xs rounded"
-                  />
-                </div>
-              )}
-=======
               <div className="mt-3 pl-16 text-xs text-gray-500 flex items-center">
                 <span className="text-yellow-400 mr-1">★</span> Favorite memory
               </div>
->>>>>>> cf1c3ec143cc9d54168bc4ff502e5d1decef4d27
             </div>
           ))}
         </div>

@@ -117,7 +117,11 @@ const LoginPage = ({ onLogin }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-11 font-bold text-lg text-white rounded-[20px] bg-gradient-to-r from-purple-500/80 to-cyan-300/80 font-['Radio_Canada'] py-2 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] disabled:opacity-50"
+            className={`w-full h-11 font-bold text-lg text-white rounded-[20px] font-['Radio_Canada'] py-2 transition-all duration-200
+              ${loading 
+                ? 'bg-gray-400 cursor-not-allowed shadow-none' 
+                : 'bg-gradient-to-r from-purple-500/80 to-cyan-300/80 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] hover:from-purple-600/90 hover:to-cyan-400/90 active:shadow-none active:translate-y-1'
+              }`}
           >
             {loading ? 'LOGGING IN...' : 'LOG IN'}
           </button>

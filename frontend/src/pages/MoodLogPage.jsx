@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-<<<<<<< HEAD
-import { FaStar, FaRegStar, FaEdit, FaTrash, FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown } from 'react-icons/fa';
-=======
 import { FaStar, FaRegStar, FaEdit, FaTrash, FaChevronDown, FaChevronUp } from 'react-icons/fa';
->>>>>>> cf1c3ec143cc9d54168bc4ff502e5d1decef4d27
 import api from '../api/axiosConfig';
 
 const MoodLogPage = () => {
@@ -567,44 +563,6 @@ const MoodLogPage = () => {
                           <span className="relative z-10">Save Changes</span>
                           <span className="absolute inset-0 h-full w-0 bg-green-400 transition-all duration-300 group-hover:w-full"></span>
                         </button>
-<<<<<<< HEAD
-                      </div>                    </div>
-                      {log.note && (
-                      <p className="mt-2 text-sm text-gray-800 pl-12">{log.note}</p>
-                    )}
-                    
-                    {/* Display image if available */}
-                    {log.image_url && (
-                      <img
-                        src={log.image_url}
-                        alt="Mood log photo"
-                        className="mt-2 w-full max-w-xs rounded ml-12"
-                      />
-                    )}
-                    
-                    {/* Like/Dislike section - only for public logs */}
-                    {log.is_public && (
-                      <div className="mt-3 flex items-center pl-12 pt-2 border-t border-gray-200">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center">
-                            <span className="mr-2 text-xs text-gray-600">Likes:</span>
-                            <span className="text-sm">{log.like_count || 0}</span>
-                          </div>
-                          
-                          <div className="flex items-center">
-                            <span className="mr-2 text-xs text-gray-600">Dislikes:</span>
-                            <span className="text-sm">{log.dislike_count || 0}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-=======
                       </div>
                     </div>
                   ) : (
@@ -663,7 +621,6 @@ const MoodLogPage = () => {
             </div>
           )}
         </div>
->>>>>>> cf1c3ec143cc9d54168bc4ff502e5d1decef4d27
       </div>
       
       <style jsx>{`
