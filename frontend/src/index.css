@@ -84,11 +84,13 @@ button:focus-visible {
 
 a {
   font-weight: normal; /* Pixel fonts are often not bold */
-  color: #0000FF; /* Blue for links, common in retro UIs */
+  color: #000000; /* Black for links */
   text-decoration: underline;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
 }
 a:hover {
-  color: #0000AA; /* Darker blue on hover */
+  color: #FFFFFF; /* White text on hover */
+  background-color: #000000; /* Black background on hover */
 }
 
 
