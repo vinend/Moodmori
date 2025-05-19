@@ -165,8 +165,8 @@ const DashboardPage = ({ user }) => {
           ? { 
               ...log, 
               user_reaction: newReaction,
-              like_count: log.like_count + likeChange,
-              dislike_count: log.dislike_count + dislikeChange
+              like_count: parseInt(log.like_count || 0) + likeChange,
+              dislike_count: parseInt(log.dislike_count || 0) + dislikeChange
             } 
           : log
       )
