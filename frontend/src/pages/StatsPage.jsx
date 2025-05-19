@@ -147,7 +147,20 @@ const StatsPage = () => {
 
   return (
     <div className="container mx-auto p-4 font-mono do">
-      <h1 className="text-2xl font-bold mb-6">MOOD STATISTICS</h1>
+      <h1
+        className="text-2xl font-bold mb-6"
+        style={{
+          fontSize: "2rem",
+          color: "#74b9ff",
+          textShadow: "2px 2px 6px rgba(0, 0, 0, 0.6)",
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          fontWeight: "bold",
+          marginBottom: "1.5rem",
+        }}
+      >
+        MOOD STATISTICS
+      </h1>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-4 text-sm">
@@ -204,7 +217,9 @@ const StatsPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Mood Distribution */}
         <div className="border-2 border-black p-6 rounded-[25px] bg-gradient-to-r from-[#B449E980] to-[#72DDF780] ">
-          <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">MOOD DISTRIBUTION</h2>
+          <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">
+            MOOD DISTRIBUTION
+          </h2>
 
           {moodPercentages.length === 0 ? (
             <p className="text-center py-6">
@@ -246,7 +261,9 @@ const StatsPage = () => {
 
         {/* Mood Calendar */}
         <div className="border-2 border-black p-6 rounded-[25px] bg-gradient-to-r from-[#B449E980] to-[#72DDF780]">
-          <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">MOOD CALENDAR</h2>
+          <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">
+            MOOD CALENDAR
+          </h2>
 
           <div className="grid grid-cols-7 gap-1">
             {/* Day headers */}
@@ -288,7 +305,9 @@ const StatsPage = () => {
 
         {/* Mood Frequency */}
         <div className="border-2 border-black p-6 rounded-[25px] bg-gradient-to-r from-[#B449E980] to-[#72DDF780] ">
-          <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">MOOD FREQUENCY</h2>
+          <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">
+            MOOD FREQUENCY
+          </h2>
 
           <p className="mb-4">Total entries: {moodLogs.length}</p>
 
