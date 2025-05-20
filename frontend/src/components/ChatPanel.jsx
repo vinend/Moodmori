@@ -1056,7 +1056,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{
-          top: scrollPosition > 64 ? '0' : '64px',
+          top: scrollPosition > 64 ? '16px' : '90px',
           bottom: '0',
           transition: 'transform 300ms ease-in-out, top 150ms ease-in-out'
         }}

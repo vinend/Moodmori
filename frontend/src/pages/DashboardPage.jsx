@@ -23,7 +23,7 @@ const DashboardPage = ({ user }) => {
         setMoods(moodsResponse.data.moods);
         
         // Fetch recent mood logs
-        const logsResponse = await api.get('/api/mood-logs?limit=5');
+        const logsResponse = await api.get('/api/mood-logs?limit=2');
         setRecentLogs(logsResponse.data.moodLogs);
         
         // Check if there's a mood logged for today

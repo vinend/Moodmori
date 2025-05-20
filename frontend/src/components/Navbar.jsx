@@ -6,7 +6,7 @@ const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinkClasses = ({ isActive }) =>
-    `flex items-center justify-center sm:justify-start w-full sm:w-auto px-4 py-3 sm:px-3 sm:py-2 text-lg tracking-wide text-black transition-colors duration-150 active:animate-button-press ${
+    `flex items-center justify-center sm:justify-start w-full sm:w-auto px-3 py-1 sm:px-3 sm:py-2 text-lg tracking-wide text-black transition-colors duration-150 active:animate-button-press ${
       isActive
         ? 'bg-black text-white'
         : 'hover:bg-black hover:text-white'
