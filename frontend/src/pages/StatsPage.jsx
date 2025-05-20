@@ -1,5 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axiosConfig';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  PointElement,
+  LineElement,
+  TimeScale,
+} from 'chart.js';
+import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import 'chart.js/auto';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  PointElement,
+  LineElement,
+  TimeScale
+);
 
 const StatsPage = () => {
   const [stats, setStats] = useState([]);
@@ -12,7 +40,6 @@ const StatsPage = () => {
     const fetchStats = async () => {
       setLoading(true);
       try {
-        // Calculate start date based on selected timeframe
         let startDate = null;
         const now = new Date();
         
@@ -27,18 +54,14 @@ const StatsPage = () => {
           startDate.setFullYear(startDate.getFullYear() - 1);
         }
         
-        // Format start date for API
-        const formattedStartDate = startDate ? 
-          startDate.toISOString().split('T')[0] : null;
-          
-        // Fetch mood stats
+        const formattedStartDate = startDate ? startDate.toISOString().split('T')[0] : null;
+        
         const statsResponse = await api.get(
           `/api/mood-logs/stats${formattedStartDate ? `?startDate=${formattedStartDate}` : ''}`
         );
         
         setStats(statsResponse.data.stats);
         
-        // Fetch mood logs for the same timeframe
         const logsResponse = await api.get(
           `/api/mood-logs${formattedStartDate ? `?startDate=${formattedStartDate}` : ''}`
         );
@@ -56,25 +79,23 @@ const StatsPage = () => {
     fetchStats();
   }, [timeframe]);
   
-  // Get appropriate color for mood
   const getMoodColor = (moodName) => {
     const moodColors = {
-      'HAPPY': '#FFE156', // yellow
-      'SAD': '#5690FF', // blue
-      'ANGRY': '#FF5656', // red
-      'AFRAID': '#BF7DFF', // purple
-      'NEUTRAL': '#E5E5E5', // gray
-      'MANIC': '#FFCF56', // bright yellow
-      'DEPRESSED': '#5670FF', // deep blue
-      'FURIOUS': '#FF3A3A', // bright red
-      'TERRIFIED': '#A346FF', // deep purple
-      'CALM': '#7DFFBF', // mint green
+      'HAPPY': '#FFE156',
+      'SAD': '#5690FF',
+      'ANGRY': '#FF5656',
+      'AFRAID': '#BF7DFF',
+      'NEUTRAL': '#E5E5E5',
+      'MANIC': '#FFCF56',
+      'DEPRESSED': '#5670FF',
+      'FURIOUS': '#FF3A3A',
+      'TERRIFIED': '#A346FF',
+      'CALM': '#7DFFBF',
     };
     
     return moodColors[moodName] || '#E5E5E5';
   };
   
-  // Calculate percentages for mood distribution
   const calculatePercentages = () => {
     const total = stats.reduce((sum, item) => sum + parseInt(item.count), 0);
     return stats.map(item => ({
@@ -83,17 +104,14 @@ const StatsPage = () => {
     }));
   };
   
-  // Generate monthly calendar data
   const generateCalendarData = () => {
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     
-    // Determine the first day to display (might be from previous month)
     const firstDayOfCalendar = new Date(firstDayOfMonth);
     firstDayOfCalendar.setDate(firstDayOfCalendar.getDate() - firstDayOfCalendar.getDay());
     
-    // Determine the last day to display (might be from next month)
     const lastDayOfCalendar = new Date(lastDayOfMonth);
     const remainingDays = 6 - lastDayOfCalendar.getDay();
     lastDayOfCalendar.setDate(lastDayOfCalendar.getDate() + remainingDays);
@@ -101,7 +119,6 @@ const StatsPage = () => {
     const calendar = [];
     const currentDate = new Date(firstDayOfCalendar);
     
-    // Generate all days for the calendar
     while (currentDate <= lastDayOfCalendar) {
       const dateString = currentDate.toISOString().split('T')[0];
       const dayLogs = moodLogs.filter(log => 
@@ -119,6 +136,38 @@ const StatsPage = () => {
     }
     
     return calendar;
+  };
+
+  const generateChartData = () => {
+    const moodPercentages = calculatePercentages();
+    
+    return {
+      labels: moodPercentages.map(mood => mood.mood_name),
+      datasets: [
+        {
+          data: moodPercentages.map(mood => mood.count),
+          backgroundColor: moodPercentages.map(mood => getMoodColor(mood.mood_name)),
+          borderColor: 'black',
+          borderWidth: 2,
+        },
+      ],
+    };
+  };
+
+  const chartOptions = {
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          font: {
+            family: 'VT323',
+            size: 14
+          }
+        }
+      }
+    },
+    responsive: true,
+    maintainAspectRatio: false,
   };
   
   if (loading) {
@@ -143,7 +192,6 @@ const StatsPage = () => {
         </div>
       )}
       
-      {/* Timeframe selector */}
       <div className="mb-8">
         <div className="flex border-2 border-black inline-flex">
           <button 
@@ -181,24 +229,8 @@ const StatsPage = () => {
           {moodPercentages.length === 0 ? (
             <p className="text-center py-6">No mood data available for this timeframe.</p>
           ) : (
-            <div className="space-y-4">
-              {moodPercentages.map(mood => (
-                <div key={mood.mood_id} className="mb-4">
-                  <div className="flex justify-between mb-1">
-                    <span className="font-bold">{mood.mood_name}</span>
-                    <span>{mood.percentage}% ({mood.count})</span>
-                  </div>
-                  <div className="w-full bg-gray-200 h-4 border border-black">
-                    <div 
-                      className="h-full" 
-                      style={{ 
-                        width: `${mood.percentage}%`, 
-                        backgroundColor: getMoodColor(mood.mood_name)
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+            <div className="h-[300px]">
+              <Doughnut data={generateChartData()} options={chartOptions} />
             </div>
           )}
         </div>
@@ -208,66 +240,67 @@ const StatsPage = () => {
           <h2 className="text-xl font-bold mb-6">MOOD CALENDAR</h2>
           
           <div className="grid grid-cols-7 gap-1">
-            {/* Day headers */}
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
               <div key={day} className="text-center font-bold text-sm py-2">
                 {day}
               </div>
             ))}
             
-            {/* Calendar days */}
-            {calendarData.map((day, index) => {
-              const mainMood = day.logs.length > 0 ? day.logs[0] : null;
-              
-              return (
-                <div 
-                  key={index}
-                  className={`
-                    aspect-square border flex flex-col items-center justify-center
-                    ${day.isToday ? 'border-2 border-black' : 'border-gray-200'}
-                    ${day.isCurrentMonth ? '' : 'text-gray-400'}
-                  `}
-                >
-                  <div className="text-xs">{day.date.getDate()}</div>
-                  
-                  {mainMood && (
-                    <div 
-                      className="w-4 h-4 rounded-full mt-1" 
-                      style={{ backgroundColor: getMoodColor(mainMood.mood_name) }}
-                      title={mainMood.mood_name}
-                    ></div>
-                  )}
+            {calendarData.map((day, index) => (
+              <div 
+                key={index}
+                className={`
+                  aspect-square border p-1 flex flex-col
+                  ${day.isToday ? 'border-2 border-black' : 'border-gray-200'}
+                  ${day.isCurrentMonth ? '' : 'text-gray-400'}
+                `}
+              >
+                <div className="text-xs mb-1">{day.date.getDate()}</div>
+                
+                <div className="flex flex-wrap gap-1 justify-center">
+                  {day.logs.map((log, logIndex) => (
+                    <div
+                      key={logIndex}
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: getMoodColor(log.mood_name) }}
+                      title={`${log.mood_name} - ${new Date(log.log_date).toLocaleTimeString()}`}
+                    />
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
         
-        {/* Mood Frequency */}
-        <div className="border-2 border-black p-6">
+        {/* Mood Timeline */}
+        <div className="border-2 border-black p-6 lg:col-span-2">
           <h2 className="text-xl font-bold mb-6">MOOD FREQUENCY</h2>
-          
-          <p className="mb-4">Total entries: {moodLogs.length}</p>
           
           {moodLogs.length === 0 ? (
             <p className="text-center py-6">No mood data available for this timeframe.</p>
           ) : (
             <div>
-              <p className="mb-2">Most common mood: 
-                <span className="font-bold ml-2">
-                  {stats.length > 0 ? stats[0].mood_name : 'None'}
-                </span>
-              </p>
-              <p className="mb-2">Average entries per week:
-                <span className="font-bold ml-2">
-                  {timeframe === 'week' 
-                    ? moodLogs.length 
-                    : Math.round((moodLogs.length / 
-                        (timeframe === 'month' ? 4 : 
-                         timeframe === 'year' ? 52 : 
-                         Math.ceil(moodLogs.length / 7))) * 10) / 10}
-                </span>
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="border-2 border-black p-4 text-center">
+                  <p className="text-sm mb-2">Total Entries</p>
+                  <p className="text-2xl font-bold">{moodLogs.length}</p>
+                </div>
+                <div className="border-2 border-black p-4 text-center">
+                  <p className="text-sm mb-2">Most Common</p>
+                  <p className="text-2xl font-bold">{stats.length > 0 ? stats[0].mood_name : 'None'}</p>
+                </div>
+                <div className="border-2 border-black p-4 text-center">
+                  <p className="text-sm mb-2">Average Per Week</p>
+                  <p className="text-2xl font-bold">
+                    {timeframe === 'week' 
+                      ? moodLogs.length 
+                      : Math.round((moodLogs.length / 
+                          (timeframe === 'month' ? 4 : 
+                           timeframe === 'year' ? 52 : 
+                           Math.ceil(moodLogs.length / 7))) * 10) / 10}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>

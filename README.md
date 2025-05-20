@@ -443,15 +443,6 @@ mindmap
    ```
 5. Open a Pull Request
 
-## 📫 Contact
-
-- **Andi Muhammad Alvin Farhansyah** - [GitHub](https://github.com/vinend)
-- **Aliya Rizqiningrum Salamun** - [GitHub](https://github.com/aliyars)
-- **Raka Arrayan Muttaqien** - [GitHub](https://github.com/raka-arrayan)
-- **Filaga Tifira Muthi** - [GitHub](https://github.com/Filaga)
-
-Project Link: [https://github.com/yourusername/mood-mori](https://github.com/yourusername/mood-mori)
-
 ---
 <div align="center">
 Made with 💖 by Team MOOD MORI

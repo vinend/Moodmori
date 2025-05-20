@@ -45,88 +45,90 @@ const RegisterPage = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
-      <div className="w-full max-w-md bg-white border-2 border-black p-8 shadow-[8px_8px_0_rgba(0,0,0)]">
-        <h1 className="text-3xl font-mono font-bold mb-6 text-black text-center">JOIN MOODMORI</h1>
-        <p className="mb-8 text-center font-mono text-sm text-gray-700">Create an account to start your emotional journey</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4 font-sans">
+      <div className="w-full max-w-md bg-white border-2 border-black p-6 sm:p-8 shadow-omori-default hover:shadow-omori-hover transition-shadow duration-300 ease-out hover:animate-zoom-in-stay">
+        <div className="animate-fade-in-up">
+          <h1 className="text-4xl sm:text-5xl font-heading mb-6 text-black text-center tracking-wider">JOIN MOODMORI</h1>
+          <p className="mb-8 text-center text-base sm:text-lg text-gray-600">Create an account to start your emotional journey.</p>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-4 font-mono text-sm">
-            {error}
+          {error && (
+            <div className="bg-red-100 border-2 border-red-500 text-red-700 px-4 py-3 mb-4 text-sm sm:text-base">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm sm:text-base mb-1 text-black" htmlFor="username">
+                USERNAME
+              </label>
+              <input
+                id="username"
+                type="text"
+                className="border-2 border-black w-full p-2.5 sm:p-3 bg-white text-black focus:outline-none focus:ring-2 focus:ring-black"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm sm:text-base mb-1 text-black" htmlFor="email">
+                EMAIL
+              </label>
+              <input
+                id="email"
+                type="email"
+                className="border-2 border-black w-full p-2.5 sm:p-3 bg-white text-black focus:outline-none focus:ring-2 focus:ring-black"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm sm:text-base mb-1 text-black" htmlFor="password">
+                PASSWORD
+              </label>
+              <input
+                id="password"
+                type="password"
+                className="border-2 border-black w-full p-2.5 sm:p-3 bg-white text-black focus:outline-none focus:ring-2 focus:ring-black"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm sm:text-base mb-1 text-black" htmlFor="confirm-password">
+                CONFIRM PASSWORD
+              </label>
+              <input
+                id="confirm-password"
+                type="password"
+                className="border-2 border-black w-full p-2.5 sm:p-3 bg-white text-black focus:outline-none focus:ring-2 focus:ring-black"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 px-4 text-black hover:bg-gray-200 active:animate-button-press disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? 'REGISTERING...' : 'REGISTER'}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center text-sm sm:text-base">
+            <p className="text-gray-600">Already have an account?</p>
+            <Link to="/" className="text-blue-600 hover:text-blue-800 underline">
+              LOG IN
+            </Link>
           </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block font-mono text-sm mb-2 text-black" htmlFor="username">
-              USERNAME
-            </label>
-            <input
-              id="username"
-              type="text"
-              className="border-2 border-black font-mono w-full p-2 bg-white text-black"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block font-mono text-sm mb-2 text-black" htmlFor="email">
-              EMAIL
-            </label>
-            <input
-              id="email"
-              type="email"
-              className="border-2 border-black font-mono w-full p-2 bg-white text-black"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block font-mono text-sm mb-2 text-black" htmlFor="password">
-              PASSWORD
-            </label>
-            <input
-              id="password"
-              type="password"
-              className="border-2 border-black font-mono w-full p-2 bg-white text-black"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block font-mono text-sm mb-2 text-black" htmlFor="confirm-password">
-              CONFIRM PASSWORD
-            </label>
-            <input
-              id="confirm-password"
-              type="password"
-              className="border-2 border-black font-mono w-full p-2 bg-white text-black"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-white border-2 border-black font-mono py-2 px-4 text-black hover:bg-black hover:text-white transition-colors disabled:opacity-50"
-          >
-            {loading ? 'REGISTERING...' : 'REGISTER'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center font-mono text-sm">
-          <p className="text-gray-700">Already have an account?</p>
-          <Link to="/" className="text-black underline">
-            LOG IN
-          </Link>
         </div>
       </div>
     </div>
