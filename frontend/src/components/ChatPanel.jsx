@@ -8,8 +8,25 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
     return localStorage.getItem('chatPanelWidth') || '320';
   });
   const [isDragging, setIsDragging] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const dragStartXRef = useRef(null);
   const dragStartWidthRef = useRef(null);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setPanelWidth('100%');
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial check
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Scaling factor logic
   const basePanelWidth = 320; // Base width in pixels for scaling
@@ -1063,23 +1080,24 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
 
       {/* Chat Panel */}
       <div 
-        className={`fixed left-0 bg-white border-r-2 border-black shadow-lg z-[9999] flex flex-col font-mono transition-transform duration-300 transform ${
+        className={`fixed bg-white border-r-2 border-black shadow-lg z-[9999] flex flex-col font-mono transition-transform duration-300 transform ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        } ${isMobile ? 'inset-0 border-none' : 'left-0'}`}
         style={{
-          top: scrollPosition > 64 ? '16px' : '90px',
+          top: isMobile ? '0' : (scrollPosition > 64 ? '16px' : '90px'),
           bottom: '0',
-          width: `${panelWidth}px`,
+          width: isMobile ? '100%' : `${panelWidth}px`,
           transition: isDragging 
             ? 'top 150ms ease-in-out' 
             : 'transform 300ms ease-in-out, top 150ms ease-in-out',
           cursor: isDragging ? 'ew-resize' : 'default'
         }}
       >
-        {/* Drag Handle */}
-        <div
-          className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-black/20 transition-colors"
-          onMouseDown={(e) => {
+        {/* Drag Handle - Only visible on desktop */}
+        {!isMobile && (
+          <div
+            className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-black/20 transition-colors"
+            onMouseDown={(e) => {
             e.preventDefault();
             setIsDragging(true);
             dragStartXRef.current = e.clientX;
@@ -1102,11 +1120,12 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
             
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
-          }}
-        />
+            }}
+          />
+        )}
         
       {/* Panel Header */}
-      <div className="p-3 border-t-2 border-b-2 border-black flex items-center justify-between bg-white sticky top-0">
+      <div className={`p-3 ${isMobile ? 'border-b' : 'border-t-2 border-b-2'} border-black flex items-center justify-between bg-white sticky top-0 z-10`}>
         <h2 className="font-bold text-lg" style={{ fontSize: `${1.125 * scaleFactor}rem` }}>MESSAGES</h2>
         <button 
           onClick={() => onClose()} // Call onClose to trigger the toggle
@@ -1236,8 +1255,8 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
               )}
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {/* Messages */}
+            <div className={`flex-1 overflow-y-auto ${isMobile ? 'p-2 pb-24' : 'p-3 pb-20'} space-y-2`}>
               {loading ? (
                 <div className="flex justify-center items-center h-full">
                   <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
@@ -1370,7 +1389,8 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
               )}
             </div>
 
-            {/* Message Input */}            <div className="p-2 border-t border-gray-200 bg-white">
+            {/* Message Input */}            
+            <div className={`sticky bottom-0 ${isMobile ? 'p-3' : 'p-2'} border-t border-gray-200 bg-white shadow-lg`}>
               {/* Show attachment preview if an image is selected */}
               {selectedImage && (
                 <div className="mb-2 relative">

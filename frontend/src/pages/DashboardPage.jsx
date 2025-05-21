@@ -294,8 +294,8 @@ const DashboardPage = ({ user }) => {
               <div key={log.id} className="border-2 border-black p-4 mb-4 last:mb-0 bg-white hover:bg-gray-50 transition-colors duration-200">
                 <div className="flex justify-between items-start">
                   <div className="flex items-start">
-                    {/* User profile picture */}
-                    <div className="w-12 h-12 border-2 border-black rounded-full overflow-hidden mr-4 flex-shrink-0">
+                    {/* User profile picture - smaller on mobile */}
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-black rounded-full overflow-hidden mr-3 sm:mr-4 flex-shrink-0">
                       {user?.profilePicture ? (
                         <img 
                           src={user.profilePicture} 
@@ -304,7 +304,7 @@ const DashboardPage = ({ user }) => {
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <FaUser className="text-gray-500 text-xl" />
+                          <FaUser className="text-gray-500 text-base sm:text-xl" />
                         </div>
                       )}
                     </div>
@@ -340,7 +340,7 @@ const DashboardPage = ({ user }) => {
                   <img
                     src={log.image_url}
                     alt="Mood log photo"
-                    className="mt-3 w-full max-w-sm rounded-lg border-2 border-black ml-14 shadow-md"
+                  className="mt-3 mx-auto w-full max-w-[200px] sm:max-w-sm rounded-lg border-2 border-black shadow-md"
                   />
                 )}
               </div>
@@ -370,8 +370,8 @@ const DashboardPage = ({ user }) => {
           <div className="space-y-6">
             {publicLogs?.map(log => (
               <div key={log.id} className="border-2 border-black p-4 mb-4 last:mb-0 bg-white hover:bg-gray-50 transition-colors duration-200">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start">
+                <div className="flex flex-col sm:flex-row sm:items-start">
+                  <div className="flex items-start flex-1">
                     {/* User profile picture */}
                     <div className="w-12 h-12 border-2 border-black rounded-full overflow-hidden mr-4 flex-shrink-0">
                       {log.profile_picture ? (
@@ -403,29 +403,33 @@ const DashboardPage = ({ user }) => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <button 
-                      onClick={() => handleLike(log)} 
-                      className="p-2 hover:bg-black hover:text-white rounded transition-colors duration-200 active:animate-button-press"
-                      aria-label="Like"
-                    >
-                      {log.user_reaction === true ? 
-                        <FaThumbsUp size={20} className="text-black" /> : 
-                        <FaRegThumbsUp size={20} />}
-                    </button>
-                    <span className="text-sm font-bold min-w-[1.5rem] text-center">{log.like_count || 0}</span>
-                    
-                    <button 
-                      onClick={() => handleDislike(log)} 
-                      className="p-2 hover:bg-black hover:text-white rounded transition-colors duration-200 active:animate-button-press"
-                      aria-label="Dislike"
-                    >
-                      {log.user_reaction === false ? 
-                        <FaThumbsDown size={20} className="text-black" /> : 
-                        <FaRegThumbsDown size={20} />}
-                    </button>
-                    <span className="text-sm font-bold min-w-[1.5rem] text-center">{log.dislike_count || 0}</span>
-                  </div>
+                    <div className="mt-4 sm:mt-0 flex items-center justify-center sm:justify-end space-x-4 sm:space-x-2">
+                      <div className="flex items-center">
+                        <button 
+                          onClick={() => handleLike(log)} 
+                          className="p-1.5 sm:p-2 hover:bg-black hover:text-white rounded transition-colors duration-200 active:animate-button-press"
+                          aria-label="Like"
+                        >
+                          {log.user_reaction === true ? 
+                            <FaThumbsUp className="w-4 h-4 sm:w-5 sm:h-5 text-black" /> : 
+                            <FaRegThumbsUp className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        </button>
+                        <span className="text-xs sm:text-sm font-bold min-w-[1.25rem] sm:min-w-[1.5rem] text-center">{log.like_count || 0}</span>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <button 
+                          onClick={() => handleDislike(log)} 
+                          className="p-1.5 sm:p-2 hover:bg-black hover:text-white rounded transition-colors duration-200 active:animate-button-press"
+                          aria-label="Dislike"
+                        >
+                          {log.user_reaction === false ? 
+                            <FaThumbsDown className="w-4 h-4 sm:w-5 sm:h-5 text-black" /> : 
+                            <FaRegThumbsDown className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        </button>
+                        <span className="text-xs sm:text-sm font-bold min-w-[1.25rem] sm:min-w-[1.5rem] text-center">{log.dislike_count || 0}</span>
+                      </div>
+                    </div>
                 </div>
                 
                 {log.note && (
@@ -435,7 +439,7 @@ const DashboardPage = ({ user }) => {
                   <img
                     src={log.image_url}
                     alt="Mood log photo"
-                    className="mt-3 w-full max-w-sm rounded-lg border-2 border-black ml-14 shadow-md"
+                    className="mt-3 mx-auto w-full max-w-[200px] sm:max-w-sm rounded-lg border-2 border-black shadow-md"
                   />
                 )}
               </div>
