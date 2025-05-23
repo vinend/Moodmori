@@ -271,7 +271,8 @@ class MoodLogRepository {  /**
          u.profile_picture,
          ${currentUserId ? 'ur.is_like AS user_reaction,' : ''}
          COALESCE((SELECT COUNT(*) FROM mood_reactions mr WHERE mr.mood_log_id = ml.id AND mr.is_like = true), 0) AS like_count,
-         COALESCE((SELECT COUNT(*) FROM mood_reactions mr WHERE mr.mood_log_id = ml.id AND mr.is_like = false), 0) AS dislike_count
+         COALESCE((SELECT COUNT(*) FROM mood_reactions mr WHERE mr.mood_log_id = ml.id AND mr.is_like = false), 0) AS dislike_count,
+         COALESCE((SELECT COUNT(*) FROM mood_comments mc WHERE mc.mood_log_id = ml.id), 0) AS comment_count
        FROM mood_logs ml
        JOIN moods m ON ml.mood_id = m.id
        JOIN users u ON ml.user_id = u.id

@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axiosConfig';
-import { FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown, FaUserCircle } from 'react-icons/fa';
+import { FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown, FaUserCircle, FaComment } from 'react-icons/fa';
 import { Link } from 'react-router-dom'; // Keep Link if you plan to link to user profiles or full posts
 
 const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
   const [publicLogs, setPublicLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [comments, setComments] = useState({}); // Stores comments for each mood log
+  const [newCommentText, setNewCommentText] = useState({}); // Stores new comment text for each mood log
+  const [showComments, setShowComments] = useState({}); // To toggle comment visibility
+  const [selectedImage, setSelectedImage] = useState(null); // For image modal
 
   const getMoodColor = (moodName) => {
     const moodColors = {
@@ -40,6 +44,62 @@ const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
 
     fetchPublicMoodLogs();
   }, []);
+
+  const fetchComments = async (moodLogId) => {
+    try {
+      const response = await api.get(`/api/comments/mood-log/${moodLogId}`);
+      setComments(prevComments => ({
+        ...prevComments,
+        [moodLogId]: response.data.comments || []
+      }));
+    } catch (err) {
+      console.error(`Error fetching comments for mood log ${moodLogId}:`, err);
+      // Optionally set an error state for comments
+    }
+  };
+
+  const handleCommentSubmit = async (moodLogId) => {
+    if (!user) {
+      alert('Please log in to comment on posts.');
+      return;
+    }
+    const content = newCommentText[moodLogId]?.trim();
+    if (!content) {
+      alert('Comment cannot be empty.');
+      return;
+    }
+
+    try {
+      const response = await api.post(`/api/comments/mood-log/${moodLogId}`, { content });
+      setComments(prevComments => ({
+        ...prevComments,
+        [moodLogId]: [...(prevComments[moodLogId] || []), response.data.comment]
+      }));
+      setNewCommentText(prevText => ({ ...prevText, [moodLogId]: '' })); // Clear input
+
+      // Optimistically update the comment count in publicLogs
+      setPublicLogs(prevLogs =>
+        prevLogs.map(log =>
+          log.id === moodLogId
+            ? { ...log, comment_count: (parseInt(log.comment_count || 0) + 1) }
+            : log
+        )
+      );
+    } catch (err) {
+      console.error('Error submitting comment:', err);
+      alert('Failed to submit comment. Please try again.');
+    }
+  };
+
+  const toggleComments = (moodLogId) => {
+    setShowComments(prev => {
+      const newState = { ...prev, [moodLogId]: !prev[moodLogId] };
+      if (newState[moodLogId] && !comments[moodLogId]) {
+        fetchComments(moodLogId); // Fetch comments only if showing and not already fetched
+      }
+      return newState;
+    });
+  };
 
   const handleLike = async (log) => {
     if (!user) {
@@ -171,7 +231,8 @@ const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
                   <img
                     src={log.image_url}
                     alt="Mood log"
-                    className="w-full h-auto rounded-none object-cover max-h-[400px] border-2 border-black"
+                    className="w-full h-auto rounded-none object-contain border-2 border-black cursor-pointer"
+                    onClick={() => setSelectedImage(log.image_url)}
                   />
                 </div>
               )}
@@ -200,13 +261,95 @@ const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
                   </button>
                   <span className="text-xs sm:text-sm font-bold min-w-[1.25rem] sm:min-w-[1.5rem] text-center text-gray-700">{log.dislike_count || 0}</span>
                 </div>
-                {/* Add Comment and Share buttons if needed later */}
+                <button
+                  onClick={() => toggleComments(log.id)}
+                  className="flex items-center p-1.5 sm:p-2 hover:bg-gray-200 rounded-full transition-colors duration-200 active:animate-button-press"
+                  aria-label="Comments"
+                >
+                  <FaComment className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 hover:text-black" />
+                  <span className="text-xs sm:text-sm font-bold ml-1 text-gray-700">
+                    {log.comment_count || 0} {/* Assuming comment_count comes from backend */}
+                  </span>
+                </button>
               </div>
+
+              {showComments[log.id] && (
+                <div className="mt-4 pt-4 border-t-2 border-black">
+                  <h3 className="font-bold text-black mb-3">Comments</h3>
+                  {comments[log.id] && comments[log.id].length > 0 ? (
+                    <div className="space-y-3">
+                      {comments[log.id].map(comment => (
+                        <div key={comment.id} className="bg-gray-100 p-3 rounded-none border border-gray-300">
+                          <div className="flex items-center mb-1">
+                            {comment.profile_picture ? (
+                              <img
+                                src={comment.profile_picture}
+                                alt={comment.username}
+                                className="w-7 h-7 rounded-full object-cover border border-gray-400 mr-2"
+                              />
+                            ) : (
+                              <FaUserCircle className="w-7 h-7 text-gray-500 mr-2 border border-gray-400 rounded-full p-0.5" />
+                            )}
+                            <p className="font-semibold text-sm text-black">{comment.username || 'Anonymous'}</p>
+                            <p className="text-xs text-gray-500 ml-2">
+                              {new Date(comment.created_at).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                            </p>
+                          </div>
+                          <p className="text-gray-800 text-sm ml-9">{comment.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600 text-sm">No comments yet. Be the first to comment!</p>
+                  )}
+
+                  <div className="mt-4 flex">
+                    <input
+                      type="text"
+                      placeholder="Add a comment..."
+                      value={newCommentText[log.id] || ''}
+                      onChange={(e) => setNewCommentText(prev => ({ ...prev, [log.id]: e.target.value }))}
+                      className="flex-1 p-2 border-2 border-black rounded-none focus:outline-none focus:border-blue-500 bg-white"
+                    />
+                    <button
+                      onClick={() => handleCommentSubmit(log.id)}
+                      className="ml-2 px-4 py-2 bg-black text-white rounded-none hover:bg-gray-800 transition-colors duration-200 active:animate-button-press"
+                    >
+                      Comment
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
       </div>
-    </div>
+    {selectedImage && (
+      <div
+        className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+        onClick={() => setSelectedImage(null)} // Close modal on overlay click
+      >
+        <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="absolute top-2 right-2 text-white text-3xl font-bold bg-gray-800 rounded-full w-10 h-10 flex items-center justify-center"
+            onClick={() => setSelectedImage(null)}
+          >
+            &times;
+          </button>
+          <img
+            src={selectedImage}
+            alt="Zoomed mood log"
+            className="max-w-full max-h-[90vh] object-contain border-2 border-white"
+          />
+        </div>
+      </div>
+    )}
+  </div>
   );
 };
 
