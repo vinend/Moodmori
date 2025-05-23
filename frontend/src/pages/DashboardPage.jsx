@@ -56,8 +56,10 @@ const DashboardPage = ({ user }) => {
       try {
         const response = await api.get('/api/mood-logs/public');
         // Server returns data.posts, not data.publicLogs
-        console.log('Public logs response:', response.data.posts);
-        setPublicLogs(response.data.posts);
+        const allPublicLogs = response.data.posts || [];
+        console.log('Public logs response:', allPublicLogs);
+        // Assuming logs are sorted newest first by the backend. If not, sorting would be needed here.
+        setPublicLogs(allPublicLogs.slice(0, 3)); 
       } catch (err) {
         console.error('Error fetching public logs:', err);
       }

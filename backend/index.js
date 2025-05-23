@@ -11,6 +11,7 @@ const favoriteRoutes = require('./src/routes/favoriteRoutes');
 const messageRoutes = require('./src/routes/messageRoutes');
 const groupChatRoutes = require('./src/routes/groupChatRoutes');
 const commentRoutes = require('./src/routes/commentRoutes');
+const consultantRoutes = require('./src/routes/consultantRoutes'); // Added consultant routes
 
 // Import controllers to initialize data
 const moodController = require('./src/controllers/moodController');
@@ -83,6 +84,7 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/group-chats', groupChatRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/consultant', consultantRoutes); // Added consultant routes
 
 // Global error handler
 app.use((err, req, res, next) => {

@@ -1104,11 +1104,11 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
             dragStartWidthRef.current = parseInt(panelWidth, 10);
             
             const handleMouseMove = (mouseMoveEvent) => {
-              // Removed the `if (isDragging)` check here.
-              // If this handler is called, we are effectively dragging.
+              if (!isDragging) return; // Re-add the check
               const delta = mouseMoveEvent.clientX - dragStartXRef.current;
               const newWidth = Math.max(280, Math.min(2500, dragStartWidthRef.current + delta));
               setPanelWidth(newWidth.toString());
+              localStorage.setItem('chatPanelWidth', newWidth.toString());
               localStorage.setItem('chatPanelWidth', newWidth.toString());
             };
             
@@ -1256,7 +1256,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
             </div>
 
         {/* Messages */}
-            <div className={`flex-1 overflow-y-auto ${isMobile ? 'p-2 pb-24' : 'p-3 pb-20'} space-y-2`}>
+            <div className={`flex-1 overflow-y-auto ${isMobile ? 'p-2 pb-3' : 'p-3 pb-20'} space-y-2`}>
               {loading ? (
                 <div className="flex justify-center items-center h-full">
                   <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
@@ -1269,118 +1269,122 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
               ) : (                <>                  {messages.map(msg => (
                     <div
                       key={msg.id ? msg.id : `temp-${Date.now()}-${Math.random()}`}
-                      className={`max-w-[90%] p-2 rounded-lg ${
-                        msg.sender_id === user?.id
-                          ? 'bg-black text-white ml-auto'
-                          : 'bg-gray-200'
-                      }`}
-                    >                      {isGroup && msg.sender_id !== user?.id && (
-                        <p className="text-xs font-bold mb-1" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
-                          {msg.username || msg.sender_username || 'Unknown User'}
-                        </p>
-                      )}                      {/* Handle different message types */}
-                      {(msg.type === 'image' || msg.message_type === 'image') ? (
-                        // Image message
-                        <div className="mb-1">                          {msg.image_url ? (
-                            <>
-                              <img 
-                                src={msg.image_url} 
-                                alt="Shared image" 
-                                className="max-w-full rounded cursor-pointer"
-                                style={{ maxHeight: `${12.5 * scaleFactor}rem` }} // Approx 200px base
-                                onClick={() => window.open(msg.image_url, '_blank')} 
-                                onLoad={() => console.log('Image loaded successfully:', msg.image_url)}
-                                onError={(e) => {
-                                  console.error('Error loading image:', msg.image_url);
-                                  e.target.onerror = null; 
-                                  e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Available';
-                                }}
-                              />
-                              <p className="text-xs mt-1 opacity-75" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>
-                                {msg.content !== 'Sent an image' ? msg.content : ''}
-                              </p>
-                            </>
-                          ) : msg.image_preview ? (
-                            <div className="relative">
-                              <img 
-                                src={msg.image_preview} 
-                                alt="Uploading image" 
-                                className="max-w-full rounded opacity-70"
-                                style={{ maxHeight: `${12.5 * scaleFactor}rem` }}
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`p-2 rounded-lg ${isMobile ? 'max-w-[75%]' : 'max-w-[90%]'} ${
+                          msg.sender_id === user?.id
+                            ? 'bg-black text-white'
+                            : 'bg-gray-200'
+                        }`}
+                      >                      {isGroup && msg.sender_id !== user?.id && (
+                          <p className="text-xs font-bold mb-1" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
+                            {msg.username || msg.sender_username || 'Unknown User'}
+                          </p>
+                        )}                      {/* Handle different message types */}
+                        {(msg.type === 'image' || msg.message_type === 'image') ? (
+                          // Image message
+                          <div className="mb-1">                          {msg.image_url ? (
+                              <>
+                                <img 
+                                  src={msg.image_url} 
+                                  alt="Shared image" 
+                                  className="max-w-full rounded cursor-pointer"
+                                  style={{ maxHeight: `${12.5 * scaleFactor}rem` }} // Approx 200px base
+                                  onClick={() => window.open(msg.image_url, '_blank')} 
+                                  onLoad={() => console.log('Image loaded successfully:', msg.image_url)}
+                                  onError={(e) => {
+                                    console.error('Error loading image:', msg.image_url);
+                                    e.target.onerror = null; 
+                                    e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Available';
+                                  }}
+                                />
+                                <p className="text-xs mt-1 opacity-75" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>
+                                  {msg.content !== 'Sent an image' ? msg.content : ''}
+                                </p>
+                              </>
+                            ) : msg.image_preview ? (
+                              <div className="relative">
+                                <img 
+                                  src={msg.image_preview} 
+                                  alt="Uploading image" 
+                                  className="max-w-full rounded opacity-70"
+                                  style={{ maxHeight: `${12.5 * scaleFactor}rem` }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                </div>
                               </div>
-                            </div>
-                          ) : (
-                            <p className="text-sm italic" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>Sending image...</p>
-                          )}
-                        </div>                        ) : (msg.type === 'location' || msg.message_type === 'location') ? (
-                        // Location message
-                        <div className="mb-1">
-                          {msg.content.includes('maps.google.com') ? (
-                            <div className="space-y-2">
-                              {/* Extract coordinates from URL and display map */}
-                              {(() => {
-                                // Extract coordinates from the URL
-                                const urlMatch = msg.content.match(/maps\?q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-                                if (urlMatch && urlMatch[1] && urlMatch[2]) {
-                                  const lat = urlMatch[1];
-                                  const lng = urlMatch[2];
-                                  const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${lat},${lng}&zoom=14`;
-                                  
-                                  return (
-                                    <>
-                                      <div 
-                                        className="w-full overflow-hidden rounded border border-gray-300"
-                                        style={{ height: `${10 * scaleFactor}rem` }} // Approx 160px base (h-40)
-                                      >
-                                        <iframe 
-                                          title="Location Map"
-                                          width="100%" 
-                                          height="100%" 
-                                          frameBorder="0" 
-                                          src={mapUrl} 
-                                          allowFullScreen
-                                          loading="lazy"
-                                        ></iframe>
-                                      </div>
-                                      <a 
-                                        href={`https://maps.google.com/maps?q=${lat},${lng}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="flex items-center text-xs underline"
-                                        style={{ fontSize: `${0.875 * scaleFactor}rem` }}
-                                      >
-                                        <FaMapMarkerAlt className="mr-1" /> Open in Google Maps
-                                      </a>
-                                    </>
-                                  );
-                                }
-                                return <p className="text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{msg.content}</p>;
-                              })()}
-                            </div>
-                          ) : (
-                            <p className="text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{msg.content}</p>
+                            ) : (
+                              <p className="text-sm italic" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>Sending image...</p>
+                            )}
+                          </div>                        ) : (msg.type === 'location' || msg.message_type === 'location') ? (
+                          // Location message
+                          <div className="mb-1">
+                            {msg.content.includes('maps.google.com') ? (
+                              <div className="space-y-2">
+                                {/* Extract coordinates from URL and display map */}
+                                {(() => {
+                                  // Extract coordinates from the URL
+                                  const urlMatch = msg.content.match(/maps\?q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                                  if (urlMatch && urlMatch[1] && urlMatch[2]) {
+                                    const lat = urlMatch[1];
+                                    const lng = urlMatch[2];
+                                    const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${lat},${lng}&zoom=14`;
+                                    
+                                    return (
+                                      <>
+                                        <div 
+                                          className="w-full overflow-hidden rounded border border-gray-300"
+                                          style={{ height: `${10 * scaleFactor}rem` }} // Approx 160px base (h-40)
+                                        >
+                                          <iframe 
+                                            title="Location Map"
+                                            width="100%" 
+                                            height="100%" 
+                                            frameBorder="0" 
+                                            src={mapUrl} 
+                                            allowFullScreen
+                                            loading="lazy"
+                                          ></iframe>
+                                        </div>
+                                        <a 
+                                          href={`https://maps.google.com/maps?q=${lat},${lng}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="flex items-center text-xs underline"
+                                          style={{ fontSize: `${0.875 * scaleFactor}rem` }}
+                                        >
+                                          <FaMapMarkerAlt className="mr-1" /> Open in Google Maps
+                                        </a>
+                                      </>
+                                    );
+                                  }
+                                  return <p className="text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{msg.content}</p>;
+                                })()}
+                              </div>
+                            ) : (
+                              <p className="text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{msg.content}</p>
+                            )}
+                          </div>
+                        ) : (
+                          // Regular text message
+                          <p className="text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{msg.content}</p>
+                        )}
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs opacity-70" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
+                            {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'sending...'}
+                          </span>
+                          {msg.sender_id === user?.id && !isGroup && (
+                            <span className="ml-1 text-xs" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
+                              {msg.is_read ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ height: `${0.75 * scaleFactor}rem`, width: `${0.75 * scaleFactor}rem` }}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : null}
+                            </span>
                           )}
                         </div>
-                      ) : (
-                        // Regular text message
-                        <p className="text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{msg.content}</p>
-                      )}
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs opacity-70" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
-                          {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'sending...'}
-                        </span>
-                        {msg.sender_id === user?.id && !isGroup && (
-                          <span className="ml-1 text-xs" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
-                            {msg.is_read ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ height: `${0.75 * scaleFactor}rem`, width: `${0.75 * scaleFactor}rem` }}>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            ) : null}
-                          </span>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -1390,7 +1394,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
             </div>
 
             {/* Message Input */}            
-            <div className={`sticky bottom-0 ${isMobile ? 'p-3' : 'p-2'} border-t border-gray-200 bg-white shadow-lg`}>
+            <div className={`sticky bottom-0 ${isMobile ? 'p-2' : 'p-2'} border-t border-gray-200 bg-white shadow-lg`}>
               {/* Show attachment preview if an image is selected */}
               {selectedImage && (
                 <div className="mb-2 relative">
@@ -1570,7 +1574,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
               )}
             </div>            {/* Group Creation Interface */}
             {isCreatingGroup ? (
-              <div className="flex-1 flex flex-col p-3">
+              <div className="flex-1 flex flex-col p-3 overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-lg" style={{ fontSize: `${1.125 * scaleFactor}rem` }}>Create Group</h3>
                   <button 
@@ -1648,7 +1652,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   </div>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto"> {/* This div was already scrollable, but the parent wasn't */}
                   <div className="flex justify-between items-center mb-2">
                     <h4 className="font-bold" style={{ fontSize: `${1 * scaleFactor}rem` }}>Select Members</h4>
                     <span className="text-xs text-gray-500" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>{filteredMembers.length} users</span>
@@ -1682,7 +1686,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     <p className="text-sm text-gray-500 text-center py-4" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>
                       {allUsers.length === 0 ? "No users found" : "No matching users found"}
                     </p>
-                  ) : (                    <div className="space-y-2">
+                  ) : (                    <div className="space-y-2 overflow-y-auto max-h-60">
                       {filteredMembers.map(user => (
                         <div
                           key={user.id}                          className={`flex items-center p-2 border-2 rounded cursor-pointer ${
@@ -1735,7 +1739,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     });
                     createGroupChat();
                   }}
-                  className={`mt-4 p-2 ${(!groupName.trim() || selectedUsers.length < 2) ? 'bg-gray-400' : 'bg-black'} text-white w-full`}
+                  className={`mt-4 p-2 ${(!groupName.trim() || selectedUsers.length < 2) ? 'bg-gray-400' : 'bg-black'} text-white w-full sticky bottom-0`}
                   disabled={!groupName.trim() || selectedUsers.length < 2}
                   style={{ fontSize: `${1 * scaleFactor}rem` }}
                 >
