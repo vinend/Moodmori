@@ -1,15 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'VT323', monospace; /* Updated to VT323 */
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: #000000; /* Changed to black for visibility */
-  background-color: #FFFFFF; /* Changed to white background */
+  color: #000000;
+  background-color: #FFFFFF;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,22 +20,13 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 18px; /* Increased base font size for pixel font */
 }
 
 @media (max-width: 640px) {
   html {
-    font-size: 14px;
+    font-size: 16px; /* Adjusted for smaller screens */
   }
-}
-
-a {
-  font-weight: 500;
-  color: #000000; /* Changed to black for visibility */
-  text-decoration: inherit;
-}
-a:hover {
-  color: #444444;
 }
 
 body {
@@ -41,8 +34,9 @@ body {
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  display: block; /* Changed from flex to block to avoid layout issues */
+  display: block;
   overflow-x: hidden;
+  font-family: 'VT323', monospace; /* Ensure body uses the font */
 }
 
 #root {
@@ -53,33 +47,52 @@ body {
 }
 
 h1 {
-  font-size: 2.5em;
+  font-size: 2.8em; /* Adjusted for pixel font */
   line-height: 1.1;
 }
 
 @media (max-width: 640px) {
   h1 {
-    font-size: 2em;
+    font-size: 2.2em; /* Adjusted for smaller screens */
   }
 }
 
 button {
-  border-radius: 8px;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #f9f9f9;
+  border-radius: 0px; /* Pixel style buttons */
+  padding: 0.5em 1em; /* Adjusted padding */
+  font-size: 1.1em; /* Adjusted font size */
+  font-weight: normal; /* Pixel fonts are often not bold */
+  font-family: 'VT323', monospace; /* Ensure buttons use the font */
+  background-color: #f0f0f0; /* Lighter gray for button */
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: background-color 0.2s, color 0.2s;
+  border: 2px solid black; /* Pixel border */
+  box-shadow: 4px 4px 0px rgba(0,0,0); /* Pixel shadow */
 }
 button:hover {
-  border-color: #000000;
+  background-color: #e0e0e0; /* Darker on hover */
+}
+button:active {
+  transform: translate(2px, 2px); /* Button press effect */
+  box-shadow: 2px 2px 0px rgba(0,0,0);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px dashed #000000; /* Pixel focus outline */
+  outline-offset: 2px;
 }
+
+a {
+  font-weight: normal; /* Pixel fonts are often not bold */
+  color: #000000; /* Black for links */
+  text-decoration: underline;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+a:hover {
+  color: #FFFFFF; /* White text on hover */
+  background-color: #000000; /* Black background on hover */
+}
+
 
 /* Mobile specific utility classes */
 .mobile-padding {
@@ -108,7 +121,8 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #1E1E1E;
+  background-color: #000000; /* Black background for OMORI theme */
   z-index: 50;
   color: white;
+  font-family: 'VT323', monospace;
 }
