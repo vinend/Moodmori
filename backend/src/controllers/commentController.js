@@ -1,6 +1,7 @@
 const commentRepository = require('../repositories/commentRepository');
 const moodLogRepository = require('../repositories/moodLogRepository');
 const responseFormatter = require('../utils/responseFormatter');
+const { query } = require('../database/connection'); // Import query for transaction
 
 /**
  * Comment controller for handling mood log comment operations
@@ -36,11 +37,11 @@ class CommentController {
 
       // Add the comment
       const comment = await commentRepository.addComment(moodLogId, userId, content);
-      
+
       // Get the full comment with user info
       const comments = await commentRepository.getCommentsByMoodLogId(moodLogId);
       const newComment = comments.find(c => c.id === comment.id);
-      
+
       responseFormatter.success(res, {
         message: 'Comment added successfully',
         comment: newComment
@@ -116,7 +117,7 @@ class CommentController {
       }
 
       await commentRepository.deleteComment(commentId);
-      
+
       responseFormatter.success(res, {
         message: 'Comment deleted successfully'
       });

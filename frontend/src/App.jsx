@@ -10,6 +10,8 @@ import FavoritesPage from './pages/FavoritesPage';
 import StatsPage from './pages/StatsPage';
 import SettingsPage from './pages/Settings';
 import NotFoundPage from './pages/NotFoundPage';
+import PublicMoodLogFeedPage from './pages/PublicMoodLogFeedPage';
+import ConsultantPage from './pages/ConsultantPage'; // Added ConsultantPage
 
 // Components
 import Navbar from './components/Navbar';
@@ -157,6 +159,14 @@ function App() {
                 <Route 
                   path="/settings" 
                   element={isAuthenticated ? <SettingsPage user={user} onProfileUpdate={handleProfileUpdate} /> : <Navigate to="/" />} 
+                />
+                <Route 
+                  path="/public-feed" 
+                  element={isAuthenticated ? <PublicMoodLogFeedPage user={user} /> : <Navigate to="/" />} 
+                />
+                <Route 
+                  path="/consultant" 
+                  element={isAuthenticated ? <ConsultantPage user={user} /> : <Navigate to="/" />} 
                 />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>

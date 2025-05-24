@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaHome, FaBook, FaStar, FaChartBar, FaSignOutAlt, FaCog, FaUser, FaComment, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHome, FaBook, FaStar, FaChartBar, FaSignOutAlt, FaCog, FaUser, FaComment, FaBars, FaTimes, FaUsers, FaBrain } from 'react-icons/fa'; // Added FaBrain
 
 const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -88,6 +88,12 @@ const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
           </NavLink>
           <NavLink to="/stats" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
             <FaChartBar className={`${iconSize} mr-2`} /> Stats
+          </NavLink>
+          <NavLink to="/public-feed" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+            <FaUsers className={`${iconSize} mr-2`} /> Feed
+          </NavLink>
+          <NavLink to="/consultant" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+            <FaBrain className={`${iconSize} mr-2`} /> Consultant
           </NavLink>
           <NavLink to="/settings" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
             <FaCog className={`${iconSize} mr-2`} /> Settings
