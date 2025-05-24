@@ -443,13 +443,6 @@ mindmap
    ```
 5. Open a Pull Request
 
-## 📫 Contact
-
-- **Andi Muhammad Alvin Farhansyah** - [GitHub](https://github.com/yourusername)
-- **Aliya Rizqiningrum Salamun** - [GitHub](https://github.com/yourusername)
-- **Raka Arrayan Muttaqien** - [GitHub](https://github.com/yourusername)
-- **Filaga Tifira Muthi** - [GitHub](https://github.com/yourusername)
-
 ---
 <div align="center">
 Made with 💖 by Team MOOD MORI
