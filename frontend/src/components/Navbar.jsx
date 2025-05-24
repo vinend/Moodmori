@@ -1,124 +1,108 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaHome, FaBook, FaStar, FaChartBar, FaSignOutAlt, FaCog, FaUser, FaComment } from 'react-icons/fa';
+import { FaHome, FaBook, FaStar, FaChartBar, FaSignOutAlt, FaCog, FaUser, FaComment, FaBars, FaTimes } from 'react-icons/fa';
 
 const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
-  // Color scheme based on the AudioPlayer theme
-  const colors = {
-    primary: 'bg-purple-500',
-    primaryHover: 'bg-purple-600',
-    primaryText: 'text-purple-500',
-    primaryTextHover: 'text-purple-700',
-    accent: 'bg-black',
-    accentText: 'text-white',
-    inactive: 'text-stone-500',
-  };
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Styling for NavLinks from master, promoting consistency
+  const navLinkClasses = ({ isActive }) =>
+    `flex items-center justify-center sm:justify-start w-full sm:w-auto px-3 py-1 sm:px-3 sm:py-2 text-lg tracking-wide text-black transition-colors duration-150 active:animate-button-press ${
+      isActive
+        ? 'bg-black text-white' // Active link style
+        : 'hover:bg-black hover:text-white' // Hover style for inactive links
+    }`;
+  
+  const iconSize = "text-lg"; // Consistent icon sizing from master
 
   return (
-    <nav className="bg-white border-b-2 border-purple-500 px-4 py-3 shadow-md">
-      <div className="flex flex-col sm:flex-row items-center justify-between">
-        <div className="flex items-center mb-3 sm:mb-0">
-          {/* Profile Picture */}
-          <div className="w-10 h-10 border-2 border-purple-500 rounded-full overflow-hidden mr-3 flex-shrink-0 shadow-md">
+    <nav className="relative font-sans bg-white border-b-2 border-black px-4 py-3"> {/* Base styles from master */}
+      <div className="flex items-center justify-between">
+        {/* Left Section: Profile Pic, Title, Username, Chat Toggle - Structure from master */}
+        <div className="flex items-center">
+          {/* Profile Picture - Using master's styling (black border, gray placeholder, responsive size) */}
+          <div className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-black rounded-full overflow-hidden mr-3 flex-shrink-0">
             {user?.profilePicture ? (
-              <img 
-                src={user.profilePicture} 
-                alt="Profile" 
+              <img
+                src={user.profilePicture}
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-purple-100 flex items-center justify-center">
-                <FaUser className="text-purple-500" />
+              // Placeholder icon style from master
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <FaUser className="text-2xl text-gray-500" />
               </div>
             )}
           </div>
-          
-          <div>
-            <h1 className="font-['Press_Start_2P'] text-xl uppercase tracking-wider text-purple-500">MOOD MORI</h1>
-            <p className="text-xs font-['Radio_Canada'] text-stone-500">{user?.username || 'Unknown User'}</p>
+          {/* Title and Username - Using master's styling */}
+          <div className="mr-4">
+            <h1 className="font-heading font-bold text-2xl sm:text-3xl uppercase tracking-wider text-black">MOOD MORI</h1>
+            <p className="text-sm text-gray-600">{user?.username || 'Unknown User'}</p>
           </div>
-          
-          {/* Messages Icon */}
-          <button 
+          {/* Chat Toggle Button - Using master's styling for consistency and interactivity */}
+          <button
             onClick={onChatToggle}
-            className={`ml-4 p-2 rounded-full ${isChatOpen ? 'bg-purple-500' : 'bg-white border border-purple-300'}`}
+            className={`p-2 border-2 transition-colors duration-150 active:animate-button-press ${
+              isChatOpen 
+              ? 'bg-black text-white border-black' 
+              : 'text-black border-transparent hover:bg-black hover:text-white hover:border-black'
+            }`}
             title="Toggle Messages"
+            aria-label="Toggle Messages"
           >
-            <FaComment className={`text-lg ${isChatOpen ? 'text-white' : 'text-purple-500'}`} />
+            <FaComment className="text-xl" /> {/* Icon size from master */}
           </button>
         </div>
-        
-        <div className="flex items-center space-x-4 font-['Radio_Canada']">
-          <NavLink 
-            to="/dashboard" 
-            className={({ isActive }) => 
-              `flex items-center px-3 py-1 rounded-lg transition-all duration-200 ${
-                isActive 
-                  ? 'bg-purple-500 text-white border-2 border-purple-700 shadow-md' 
-                  : 'text-purple-500 hover:bg-purple-100 hover:border-2 hover:border-purple-400'
-              }`
-            }
-          >
-            <FaHome className="mr-1" /> Home
-          </NavLink>
-          
-          <NavLink 
-            to="/log" 
-            className={({ isActive }) => 
-              `flex items-center px-3 py-1 rounded-lg transition-all duration-200 ${
-                isActive 
-                  ? 'bg-purple-500 text-white border-2 border-purple-700 shadow-md' 
-                  : 'text-purple-500 hover:bg-purple-100 hover:border-2 hover:border-purple-400'
-              }`
-            }
-          >
-            <FaBook className="mr-1" /> Log
-          </NavLink>
-          
-          <NavLink 
-            to="/favorites" 
-            className={({ isActive }) => 
-              `flex items-center px-3 py-1 rounded-lg transition-all duration-200 ${
-                isActive 
-                  ? 'bg-purple-500 text-white border-2 border-purple-700 shadow-md' 
-                  : 'text-purple-500 hover:bg-purple-100 hover:border-2 hover:border-purple-400'
-              }`
-            }
-          >
-            <FaStar className="mr-1" /> Favorites
-          </NavLink>
-          
-          <NavLink 
-            to="/stats" 
-            className={({ isActive }) => 
-              `flex items-center px-3 py-1 rounded-lg transition-all duration-200 ${
-                isActive 
-                  ? 'bg-purple-500 text-white border-2 border-purple-700 shadow-md' 
-                  : 'text-purple-500 hover:bg-purple-100 hover:border-2 hover:border-purple-400'
-              }`
-            }
-          >
-            <FaChartBar className="mr-1" /> Stats
-          </NavLink>
 
-          <NavLink 
-            to="/settings" 
-            className={({ isActive }) => 
-              `flex items-center px-3 py-1 rounded-lg transition-all duration-200 ${
-                isActive 
-                  ? 'bg-purple-500 text-white border-2 border-purple-700 shadow-md' 
-                  : 'text-purple-500 hover:bg-purple-100 hover:border-2 hover:border-purple-400'
-              }`
-            }
+        {/* Hamburger Menu Button (Mobile) - From master */}
+        <div className="sm:hidden">
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 text-black focus:outline-none active:animate-button-press"
+            aria-label="Toggle navigation menu"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-menu"
           >
-            <FaCog className="mr-1" /> Settings
+            {isMobileMenuOpen ? <FaTimes className="text-2xl" /> : <FaBars className="text-2xl" />}
+          </button>
+        </div>
+
+        {/* Navigation Links (Desktop and Mobile Menu) - Structure and classes from master */}
+        <div
+          id="mobile-menu"
+          className={`
+            absolute sm:static top-full left-0 right-0 bg-white sm:bg-transparent shadow-lg sm:shadow-none
+            ${isMobileMenuOpen ? 'flex flex-col py-2 border-l-2 border-r-2 border-b-2 border-black' : 'hidden'} 
+            sm:flex sm:flex-row sm:items-center sm:space-x-3 sm:border-none sm:py-0 z-30
+          `}
+        >
+          <NavLink to="/dashboard" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+            <FaHome className={`${iconSize} mr-2`} /> Home
           </NavLink>
-          
-          <button 
-            onClick={onLogout}
-            className="flex items-center px-3 py-1 rounded-lg text-red-500 hover:bg-red-100 hover:border-2 hover:border-red-400 transition-all duration-200"
+          <NavLink to="/log" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+            <FaBook className={`${iconSize} mr-2`} /> Log
+          </NavLink>
+          <NavLink to="/favorites" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+            <FaStar className={`${iconSize} mr-2`} /> Favorites
+          </NavLink>
+          <NavLink to="/stats" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+            <FaChartBar className={`${iconSize} mr-2`} /> Stats
+          </NavLink>
+          <NavLink to="/settings" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+            <FaCog className={`${iconSize} mr-2`} /> Settings
+          </NavLink>
+          <button
+            onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}
+            // Applying base link styles, ensuring it behaves like other nav items
+            // The specific class from master was a bit complex; this simplifies while maintaining behavior.
+            // For a distinct logout color (like red from fe-aliya), you could add 'text-red-500 hover:text-red-700' here
+            // alongside other classes from navLinkClasses if needed, or create a separate class.
+            // For now, it will match other inactive links' hover behavior.
+            className={`${navLinkClasses({isActive: false})} w-full sm:w-auto`}
+            aria-label="Logout"
           >
-            <FaSignOutAlt className="mr-1" /> Logout
+            <FaSignOutAlt className={`${iconSize} mr-2`} /> Logout
           </button>
         </div>
       </div>

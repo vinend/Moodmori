@@ -29,7 +29,7 @@ const LoginPage = ({ onLogin }) => {
     }
   };
 
-  // Icon components
+  // Icon components from fe-aliya
   const EmailIcon = () => (
     <svg className="w-7 h-7" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="4" y="6" width="20" height="16" rx="2" stroke="#B449E9" strokeWidth="2"/>
@@ -52,14 +52,17 @@ const LoginPage = ({ onLogin }) => {
   );
 
   return (
+    // Base structure and background from fe-aliya
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-stone-100 p-4">
-      <div className="w-full max-w-md bg-white p-8 relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-        {/* Corner decorations */}
+      {/* Form container styling from fe-aliya, with entry animation from master */}
+      <div className="w-full max-w-md bg-white p-8 relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up">
+        {/* Corner decorations from fe-aliya */}
         <CornerDecoration position="left-6 top-6" />
         <CornerDecoration position="right-6 top-6 rotate-90" />
         <CornerDecoration position="left-6 bottom-6 -rotate-90" />
         <CornerDecoration position="right-6 bottom-6 rotate-180" />
         
+        {/* Title and subtitle from fe-aliya */}
         <h1 className="text-xl font-['Press_Start_2P'] mb-2 text-purple-500 text-center">
           START<br/>MOODMORI
         </h1>
@@ -67,13 +70,15 @@ const LoginPage = ({ onLogin }) => {
           Track your emotional journey in the style of OMORI
         </p>
 
+        {/* Error message styling: fe-aliya font, master border strength */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-4 font-['Radio_Canada'] text-xs">
+          <div className="bg-red-100 border-2 border-red-500 text-red-700 px-4 py-3 mb-4 font-['Radio_Canada'] text-xs">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
+          {/* Email input from fe-aliya */}
           <div className="mb-4">
             <label className="block text-xs mb-1 text-black font-['Radio_Canada']" htmlFor="email">
               Email
@@ -82,18 +87,19 @@ const LoginPage = ({ onLogin }) => {
               <input
                 id="email"
                 type="email"
-                className="border border-black w-full p-2 h-11 pl-12 bg-white text-black font-['Radio_Canada']"
+                className="border border-black w-full p-2 h-11 pl-12 bg-white text-black font-['Radio_Canada'] focus:outline-none focus:ring-2 focus:ring-purple-500"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 required
               />
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <EmailIcon />
               </div>
             </div>
           </div>
 
+          {/* Password input from fe-aliya */}
           <div className="mb-6">
             <label className="block text-xs mb-1 text-black font-['Radio_Canada']" htmlFor="password">
               Password
@@ -102,18 +108,19 @@ const LoginPage = ({ onLogin }) => {
               <input
                 id="password"
                 type="password"
-                className="border border-black w-full p-2 h-11 pl-12 bg-white text-black font-['Radio_Canada']"
+                className="border border-black w-full p-2 h-11 pl-12 bg-white text-black font-['Radio_Canada'] focus:outline-none focus:ring-2 focus:ring-purple-500"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a password"
+                placeholder="Enter your password"
                 required
               />
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <LockIcon />
               </div>
             </div>
           </div>
 
+          {/* Submit button from fe-aliya */}
           <button
             type="submit"
             disabled={loading}
@@ -127,13 +134,30 @@ const LoginPage = ({ onLogin }) => {
           </button>
         </form>
 
+        {/* Link to register page from fe-aliya */}
         <div className="mt-6 text-center text-xs font-['Radio_Canada']">
           <span className="text-stone-500">Don't have an account? </span>
-          <Link to="/register" className="text-purple-500 font-bold">
+          <Link to="/register" className="text-purple-500 font-bold hover:underline">
             REGISTER
           </Link>
         </div>
       </div>
+      {/* Add master's fade-in animation style if not globally defined */}
+      <style jsx global>{` 
+        .animate-fade-in-up {
+          animation: fade-in-up 0.5s ease-out forwards;
+        }
+        @keyframes fade-in-up {
+          0% {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };

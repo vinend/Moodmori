@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL } from '../constants';
-import { FaPlus, FaStar, FaRegStar, FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown } from 'react-icons/fa';
+// API_URL is not used in the provided snippets, but often is in constants. Assuming it's not needed for this merge.
+import { FaPlus, FaStar, FaRegStar, FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown, FaUser } from 'react-icons/fa';
 import api from '../api/axiosConfig';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -16,22 +16,20 @@ const DashboardPage = ({ user }) => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
-      
       try {
-        // Fetch all available moods
         const moodsResponse = await api.get('/api/moods');
         setMoods(moodsResponse.data.moods);
-        
-        // Fetch recent mood logs
-        const logsResponse = await api.get('/api/mood-logs?limit=5');
+
+        const logsResponse = await api.get('/api/mood-logs?limit=5'); // Fetch a few more for recent
         setRecentLogs(logsResponse.data.moodLogs);
-        
-        // Check if there's a mood logged for today
-        const today = new Date().toISOString().split('T')[0];
-        const todayLog = logsResponse.data.moodLogs.find(log => 
-          new Date(log.log_date).toISOString().split('T')[0] === today
-        );
-        
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayLog = logsResponse.data.moodLogs.find(log => {
+          const logDate = new Date(log.log_date);
+          logDate.setHours(0, 0, 0, 0);
+          return logDate.getTime() === today.getTime();
+        });
         setTodaysMood(todayLog);
       } catch (err) {
         console.error('Dashboard data fetch error:', err);
@@ -40,25 +38,22 @@ const DashboardPage = ({ user }) => {
         setLoading(false);
       }
     };
-    
     fetchDashboardData();
   }, []);
-  
+
   useEffect(() => {
     const fetchPublicLogs = async () => {
       try {
         const response = await api.get('/api/mood-logs/public');
-        // Server returns data.posts, not data.publicLogs
-        console.log('Public logs response:', response.data.posts);
-        setPublicLogs(response.data.posts);
+        setPublicLogs(response.data.posts || []); // Ensure posts is fallback to empty array
       } catch (err) {
         console.error('Error fetching public logs:', err);
+        // Optionally set an error state for public logs if needed
       }
     };
-
     fetchPublicLogs();
   }, []);
-  
+
   const toggleFavorite = async (moodLogId, isFavorite) => {
     try {
       if (isFavorite) {
@@ -66,12 +61,18 @@ const DashboardPage = ({ user }) => {
       } else {
         await api.post('/api/favorites', { moodLogId });
       }
-
-      // Update the UI optimistically
-      setRecentLogs(prevLogs => 
-        prevLogs.map(log => 
-          log.id === moodLogId 
-            ? { ...log, is_favorite: !isFavorite } 
+      setRecentLogs(prevLogs =>
+        prevLogs.map(log =>
+          log.id === moodLogId
+            ? { ...log, is_favorite: !isFavorite }
+            : log
+        )
+      );
+      // Optimistically update public logs as well if the item could be there
+      setPublicLogs(prevLogs =>
+        prevLogs.map(log =>
+          log.id === moodLogId
+            ? { ...log, is_favorite: !isFavorite } // Assuming public logs might have favorite status
             : log
         )
       );
@@ -79,132 +80,94 @@ const DashboardPage = ({ user }) => {
       console.error('Error toggling favorite:', err);
     }
   };
-  
-  // Handle liking a log
-  const handleLike = async (log) => {
-    try {
-      // Check if the user is trying to like their own post
-      if (log.user_id === user?.id) {
-        console.log('You cannot like your own posts');
-        alert('You cannot like your own posts');
-        return;
-      }
-      
-      // If user already liked, remove the reaction
-      if (log.user_reaction === true) {
-        await api.delete(`/api/mood-logs/${log.id}/reaction`);
-        
-        // Update UI optimistically - remove like
-        updateLogReaction(log.id, null, -1, 0);
-      } 
-      // If user had disliked, change to like
-      else if (log.user_reaction === false) {
-        await api.post(`/api/mood-logs/${log.id}/like`);
-        
-        // Update UI optimistically - remove dislike, add like
-        updateLogReaction(log.id, true, 1, -1);
-      } 
-      // If no reaction yet, add like
-      else {
-        await api.post(`/api/mood-logs/${log.id}/like`);
-        
-        // Update UI optimistically - add like
-        updateLogReaction(log.id, true, 1, 0);
-      }
-    } catch (err) {
-      console.error('Error handling like:', err);
-      if (err.response && err.response.status === 400) {
-        alert(err.response.data.message || 'Cannot like this post');
-      }
-    }
-  };
-  
-  // Handle disliking a log
-  const handleDislike = async (log) => {
-    try {
-      // Check if the user is trying to dislike their own post
-      if (log.user_id === user?.id) {
-        console.log('You cannot dislike your own posts');
-        alert('You cannot dislike your own posts');
-        return;
-      }
-      
-      // If user already disliked, remove the reaction
-      if (log.user_reaction === false) {
-        await api.delete(`/api/mood-logs/${log.id}/reaction`);
-        
-        // Update UI optimistically - remove dislike
-        updateLogReaction(log.id, null, 0, -1);
-      } 
-      // If user had liked, change to dislike
-      else if (log.user_reaction === true) {
-        await api.post(`/api/mood-logs/${log.id}/dislike`);
-        
-        // Update UI optimistically - remove like, add dislike
-        updateLogReaction(log.id, false, -1, 1);
-      } 
-      // If no reaction yet, add dislike
-      else {
-        await api.post(`/api/mood-logs/${log.id}/dislike`);
-        
-        // Update UI optimistically - add dislike
-        updateLogReaction(log.id, false, 0, 1);
-      }
-    } catch (err) {
-      console.error('Error handling dislike:', err);
-      if (err.response && err.response.status === 400) {
-        alert(err.response.data.message || 'Cannot dislike this post');
-      }
-    }
-  };
-  
-  // Update the reaction state in the UI
+
   const updateLogReaction = (logId, newReaction, likeChange, dislikeChange) => {
-    // Update public logs
-    setPublicLogs(prevLogs => 
-      prevLogs.map(log => 
-        log.id === logId 
-          ? { 
-              ...log, 
+    setPublicLogs(prevLogs =>
+      prevLogs.map(log =>
+        log.id === logId
+          ? {
+              ...log,
               user_reaction: newReaction,
-              like_count: log.like_count + likeChange,
-              dislike_count: log.dislike_count + dislikeChange
-            } 
+              like_count: parseInt(log.like_count || 0) + likeChange,
+              dislike_count: parseInt(log.dislike_count || 0) + dislikeChange,
+            }
           : log
       )
     );
   };
-
-  // Keep original mood colors but use new colors for UI elements
-  const getMoodColor = (moodName) => {
-    const moodColors = {
-      'HAPPY': 'bg-yellow-300', // Original yellow
-      'SAD': 'bg-blue-300', // Original blue
-      'ANGRY': 'bg-red-500', // Original red
-      'AFRAID': 'bg-purple-300', // Original purple
-      'NEUTRAL': 'bg-gray-300', // Original gray
-      'MANIC': 'bg-yellow-500', // Original deeper yellow
-      'DEPRESSED': 'bg-blue-500', // Original deeper blue
-      'FURIOUS': 'bg-red-700', // Original deeper red
-      'TERRIFIED': 'bg-purple-500', // Original deeper purple
-      'CALM': 'bg-green-300', // Original green
-    };
-    
-    return moodColors[moodName] || 'bg-gray-300'; // Default to gray
+  
+  const handleLike = async (log) => {
+    if (log.user_id === user?.id) {
+      alert('You cannot like your own posts');
+      return;
+    }
+    try {
+      if (log.user_reaction === true) { // Already liked, so unliking
+        await api.delete(`/api/mood-logs/${log.id}/reaction`);
+        updateLogReaction(log.id, null, -1, 0);
+      } else { // Not liked or previously disliked
+        await api.post(`/api/mood-logs/${log.id}/like`);
+        const dislikeChange = log.user_reaction === false ? -1 : 0; // If was disliked, remove dislike
+        updateLogReaction(log.id, true, 1, dislikeChange);
+      }
+    } catch (err) {
+      console.error('Error handling like:', err);
+      if (err.response && err.response.status === 400) {
+        alert(err.response.data.message || 'Cannot process like action.');
+      }
+    }
   };
 
-  // Add the gradient background class to body with more curvature
+  const handleDislike = async (log) => {
+    if (log.user_id === user?.id) {
+      alert('You cannot dislike your own posts');
+      return;
+    }
+    try {
+      if (log.user_reaction === false) { // Already disliked, so undisliking
+        await api.delete(`/api/mood-logs/${log.id}/reaction`);
+        updateLogReaction(log.id, null, 0, -1);
+      } else { // Not disliked or previously liked
+        await api.post(`/api/mood-logs/${log.id}/dislike`);
+        const likeChange = log.user_reaction === true ? -1 : 0; // If was liked, remove like
+        updateLogReaction(log.id, false, likeChange, 1);
+      }
+    } catch (err) {
+      console.error('Error handling dislike:', err);
+       if (err.response && err.response.status === 400) {
+        alert(err.response.data.message || 'Cannot process dislike action.');
+      }
+    }
+  };
+
+  // Using fe-aliya's mood color function for Tailwind classes
+  const getMoodColor = (moodName) => {
+    const moodColors = {
+      'HAPPY': 'bg-yellow-300',
+      'SAD': 'bg-blue-300',
+      'ANGRY': 'bg-red-500',
+      'AFRAID': 'bg-purple-300',
+      'NEUTRAL': 'bg-gray-300',
+      'MANIC': 'bg-yellow-500',
+      'DEPRESSED': 'bg-blue-500',
+      'FURIOUS': 'bg-red-700',
+      'TERRIFIED': 'bg-purple-500',
+      'CALM': 'bg-green-300',
+    };
+    return moodColors[moodName] || 'bg-gray-300';
+  };
+
+  // fe-aliya's gradient background for the body
   useEffect(() => {
     document.body.classList.add('bg-gradient-to-br', 'from-[#F7AEF8]', 'via-[#9A93EE]', 'to-[#72DDF7]');
-    
     return () => {
       document.body.classList.remove('bg-gradient-to-br', 'from-[#F7AEF8]', 'via-[#9A93EE]', 'to-[#72DDF7]');
     };
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
+    return ( // fe-aliya's themed loading spinner
+      <div className="flex flex-col items-center justify-center h-screen"> {/* Use h-screen for full page */}
         <div className="w-12 h-12 border-4 border-[#B449E9] border-t-transparent rounded-full animate-spin mb-4"></div>
         <p className="font-mono text-[#B33BEB]">Loading dashboard...</p>
       </div>
@@ -212,189 +175,211 @@ const DashboardPage = ({ user }) => {
   }
 
   if (error) {
-    return (
-      <div className="p-4 border-2 border-red-500 bg-red-50 text-red-700 font-mono my-4">
-        <p>{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-2 underline"
-        >
-          Try again
-        </button>
+    return ( // fe-aliya's error display
+      <div className="container mx-auto p-4 flex flex-col items-center justify-center h-screen">
+        <div className="p-4 border-2 border-red-500 bg-red-50 text-red-700 font-mono my-4 rounded-md shadow-lg max-w-md text-center">
+          <p>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 underline text-red-700 hover:text-red-900"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 font-mono">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2 text-black">WELCOME, {user?.username?.toUpperCase()}</h1>
-        <p className="text-sm text-black text-opacity-90">Today is {new Date().toLocaleDateString()}</p>
+    // Using master's font-sans and fe-aliya's main container font-mono preference resolved to font-sans for consistency with master's text styling
+    <div className="container mx-auto p-4 font-sans">
+      {/* Welcome message from master */}
+      <div className="mb-8 animate-fade-in-up">
+        <h1 className="text-3xl sm:text-4xl font-heading mb-3 tracking-wider text-black">
+          WELCOME, {user ? user.username.toUpperCase() : 'FRIEND'}!
+        </h1>
+        <p className="text-lg text-gray-700 tracking-wide"> {/* Darker gray for better contrast on gradient */}
+          {new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        {/* Today's Mood Section */}
-        <div className="border-2 border-[#B33BEB] p-6 rounded-2xl bg-gradient-to-br from-[#F7AEF8] via-[#9A93EE] to-[#72DDF7] bg-opacity-90 shadow-lg">
-          <h2 className="text-xl font-bold mb-4 text-black">TODAY'S MOOD</h2>
-          
+        {/* Today's Mood Section - master's card style */}
+        <div className="border-2 border-black p-6 bg-white shadow-omori-default hover:shadow-omori-hover transition-shadow duration-300 hover:animate-zoom-in-stay rounded-lg">
+          <h2 className="text-2xl font-heading mb-4 tracking-wider text-black">TODAY'S MOOD</h2>
           {todaysMood ? (
             <div className="flex items-center">
-              <div className={`w-12 h-12 rounded-full ${getMoodColor(todaysMood.mood_name)} mr-4`}></div>
+              <div className={`w-16 h-16 rounded-full ${getMoodColor(todaysMood.mood_name)} mr-4 border-2 border-black`}></div>
               <div>
-                <p className="text-lg font-bold text-[#B33BEB]">{todaysMood.mood_name}</p>
-                <p className="text-sm text-[#9A93EE]">{todaysMood.note || 'No notes'}</p>
+                <p className="text-xl font-bold tracking-wide text-black">{todaysMood.mood_name}</p>
+                <p className="text-base text-gray-600">{todaysMood.note || 'No notes'}</p>
               </div>
             </div>
           ) : (
             <div className="text-center">
-              <p className="mb-4 text-white">You haven't logged your mood today</p>
-              <Link 
-                to="/log" 
-                className="inline-flex items-center border-2 border-white px-4 py-2 rounded-md text-white hover:bg-white hover:text-[#B33BEB] transition-colors"
+              <p className="mb-6 text-lg text-gray-700">You haven't logged your mood today</p>
+              <Link
+                to="/log"
+                className="inline-flex items-center border-2 border-black px-6 py-3 hover:bg-black hover:text-white transition-colors duration-200 active:animate-button-press text-lg rounded-md"
               >
                 <FaPlus className="mr-2" /> Log Today's Mood
               </Link>
             </div>
           )}
         </div>
-        
-        {/* Quick Log Section */}
-        <div className="border-2 border-[#8D91FD] p-6 rounded-2xl bg-gradient-to-br from-[#F7AEF8] via-[#9A93EE] to-[#72DDF7] bg-opacity-90 shadow-lg">
-          <h2 className="text-xl font-bold mb-4 text-black">QUICK MOOD LOG</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+
+        {/* Quick Log Section - master's card style */}
+        <div className="border-2 border-black p-6 bg-white shadow-omori-default hover:shadow-omori-hover transition-shadow duration-300 hover:animate-zoom-in-stay rounded-lg">
+          <h2 className="text-2xl font-heading mb-4 tracking-wider text-black">QUICK MOOD LOG</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"> {/* Adjusted grid for responsiveness */}
             {moods.slice(0, 5).map(mood => (
-              <Link 
+              <Link
                 key={mood.id}
                 to={`/log?moodId=${mood.id}`}
-                className={`flex flex-col items-center justify-center p-2 border-2 border-white ${getMoodColor(mood.mood_name)} hover:opacity-80 rounded-md transition-all`}
+                className={`flex flex-col items-center justify-center p-3 border-2 border-black ${getMoodColor(mood.mood_name)} hover:opacity-90 transition-opacity duration-200 active:animate-button-press rounded-md`}
               >
-                <p className="text-sm font-bold text-black">{mood.mood_name}</p>
+                <p className="text-base font-bold tracking-wide text-black text-center">{mood.mood_name}</p>
               </Link>
             ))}
           </div>
         </div>
       </div>
-      
-      {/* Recent Logs Section */}
-      <div className="border-2 border-[#8093F1] p-6 rounded-2xl bg-gradient-to-br from-[#F7AEF8] via-[#9A93EE] to-[#72DDF7] bg-opacity-90 shadow-lg mb-8">
-        <h2 className="text-xl font-bold mb-4 text-black">RECENT ENTRIES</h2>
-        
+
+      {/* Recent Logs Section - master's card style */}
+      <div className="border-2 border-black p-6 bg-white shadow-omori-default mb-8 rounded-lg">
+        <h2 className="text-2xl font-heading mb-6 tracking-wider flex items-center text-black">
+          <span className="mr-2 text-black">⬥</span> RECENT ENTRIES
+        </h2>
         {recentLogs.length === 0 ? (
-          <p className="text-center py-6 text-[#9A93EE]">No mood logs yet. Start by logging your mood!</p>
+          <p className="text-center py-8 text-lg text-gray-700">No mood logs yet. Start by logging your mood!</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {recentLogs.map(log => (
-              <div key={log.id} className="border-b border-white border-opacity-50 pb-4 last:border-b-0">
+              <div key={log.id} className="border-2 border-gray-200 p-4 bg-white hover:bg-gray-50 transition-colors duration-200 rounded-md"> {/* Slightly different border for inner items */}
                 <div className="flex justify-between items-start">
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full ${getMoodColor(log.mood_name)} mr-4`}></div>
-                    <div>
-                      <p className="font-bold text-white">{log.mood_name}</p>
-                      <p className="text-xs text-white text-opacity-90">
-                        {new Date(log.log_date).toLocaleDateString()}
+                  <div className="flex items-start">
+                    <div className="w-12 h-12 border-2 border-black rounded-full overflow-hidden mr-4 flex-shrink-0">
+                      {user?.profilePicture ? (
+                        <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <FaUser className="text-gray-500 text-xl" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center mb-1">
+                        <div className={`w-6 h-6 rounded-full ${getMoodColor(log.mood_name)} mr-2 border-2 border-black`}></div>
+                        <p className="text-lg font-bold tracking-wide text-black">{log.mood_name}</p>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {new Date(log.log_date).toLocaleDateString('en-US', {
+                          weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        })}
                       </p>
                     </div>
                   </div>
-                  
-                  <button 
+                  <button
                     onClick={() => toggleFavorite(log.id, log.is_favorite)}
-                    className="text-black hover:text-yellow-300 transition-colors"
+                    className="text-gray-400 hover:text-yellow-500 transition-colors duration-200 active:animate-button-press p-1"
                   >
-                    {log.is_favorite ? <FaStar size={20} className="text-yellow-300" /> : <FaRegStar size={20} />}
+                    {log.is_favorite ? <FaStar size={24} className="text-yellow-500" /> : <FaRegStar size={24} />}
                   </button>
                 </div>
-                {log.note && (
-                  <p className="mt-2 text-sm text-black text-opacity-90 pl-12">{log.note}</p>
-                )}
-                
+                {log.note && <p className="mt-3 text-base text-gray-800 pl-16">{log.note}</p>} {/* Adjusted pl for alignment */}
                 {log.image_url && (
-                  <img
-                    src={log.image_url}
-                    alt="Mood log photo"
-                    className="mt-2 w-full max-w-xs rounded-md ml-12 border-2 border-white shadow-md"
-                  />
+                  <img src={log.image_url} alt="Mood log" className="mt-3 w-full max-w-sm rounded-lg border-2 border-black ml-16 shadow-md" />
                 )}
               </div>
             ))}
           </div>
         )}
-        
-        <div className="mt-6 text-center">
-          <Link 
-            to="/log" 
-            className="inline-block border-2 border-white px-4 py-2 rounded-md text-white hover:bg-white hover:text-[#8093F1] transition-colors"
+        <div className="mt-8 text-center">
+          <Link
+            to="/all-logs" // Assuming a route for all personal logs
+            className="inline-block border-2 border-black px-6 py-3 hover:bg-black hover:text-white transition-colors duration-200 active:animate-button-press text-lg rounded-md"
           >
             View All Entries
           </Link>
         </div>
       </div>
 
-      {/* Public Logs Section */}
-      <div className="border-2 border-[#72DDF7] p-6 rounded-2xl bg-gradient-to-br from-[#F7AEF8] via-[#9A93EE] to-[#72DDF7] bg-opacity-90 shadow-lg">
-        <h2 className="text-xl font-bold mb-4 text-black">PUBLIC MOOD LOGS</h2>
-
+      {/* Public Logs Section - master's card style */}
+      <div className="border-2 border-black p-6 bg-white shadow-omori-default rounded-lg">
+        <h2 className="text-2xl font-heading mb-6 tracking-wider flex items-center text-black">
+          <span className="mr-2 text-black">⬥</span> PUBLIC MOOD LOGS
+        </h2>
         {publicLogs?.length === 0 ? (
-          <p className="text-center py-6 text-[#9A93EE]">No public mood logs available.</p>
+          <p className="text-center py-8 text-lg text-gray-700">No public mood logs available.</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {publicLogs?.map(log => (
-              <div key={log.id} className="border-b border-white border-opacity-50 pb-4 last:border-b-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full ${getMoodColor(log.mood_name)} mr-4`}></div>
-                    <div>
-                      <p className="font-bold text-white">{log.mood_name}</p>
-                      <p className="text-xs text-white text-opacity-90">
-                        {new Date(log.log_date).toLocaleDateString()} by {log.username}
+              <div key={log.id} className="border-2 border-gray-200 p-4 bg-white hover:bg-gray-50 transition-colors duration-200 rounded-md">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start">
+                    <div className="w-12 h-12 border-2 border-black rounded-full overflow-hidden mr-4 flex-shrink-0">
+                      {log.profile_picture ? (
+                        <img src={log.profile_picture} alt={`${log.username}'s profile`} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <FaUser className="text-gray-500 text-xl" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center mb-1">
+                        <div className={`w-6 h-6 rounded-full ${getMoodColor(log.mood_name)} mr-2 border-2 border-black`}></div>
+                        <p className="text-lg font-bold tracking-wide text-black">{log.mood_name}</p>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {new Date(log.log_date).toLocaleDateString('en-US', {
+                          weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        })} by <span className="font-semibold">{log.username}</span>
                       </p>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center">
-                      <button 
-                        onClick={() => handleLike(log)} 
-                        className="mr-1 focus:outline-none"
-                      >
-                        {log.user_reaction === true ? 
-                          <FaThumbsUp className="text-blue-300" /> : 
-                          <FaRegThumbsUp className="text-black" />}
-                      </button>
-                      <span className="text-xs mr-3 text-white">{log.like_count || 0}</span>
-                      
-                      <button 
-                        onClick={() => handleDislike(log)} 
-                        className="mr-1 focus:outline-none"
-                      >
-                        {log.user_reaction === false ? 
-                          <FaThumbsDown className="text-red-500" /> : 
-                          <FaRegThumbsDown className="text-black" />}
-                      </button>
-                      <span className="text-xs text-white">{log.dislike_count || 0}</span>
-                    </div>
+                  {/* Like/Dislike using master's button style & fe-aliya's icon color logic */}
+                  <div className="flex items-center space-x-1 sm:space-x-2">
+                    <button
+                      onClick={() => handleLike(log)}
+                      className="p-1 sm:p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors duration-200 active:animate-button-press"
+                      aria-label="Like"
+                    >
+                      {log.user_reaction === true ?
+                        <FaThumbsUp size={20} className="text-blue-500" /> :
+                        <FaRegThumbsUp size={20} className="text-gray-500 hover:text-blue-500" />}
+                    </button>
+                    <span className="text-sm font-bold min-w-[1.5rem] text-center text-gray-700">{log.like_count || 0}</span>
+                    <button
+                      onClick={() => handleDislike(log)}
+                      className="p-1 sm:p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors duration-200 active:animate-button-press"
+                      aria-label="Dislike"
+                    >
+                      {log.user_reaction === false ?
+                        <FaThumbsDown size={20} className="text-red-500" /> :
+                        <FaRegThumbsDown size={20} className="text-gray-500 hover:text-red-500" />}
+                    </button>
+                    <span className="text-sm font-bold min-w-[1.5rem] text-center text-gray-700">{log.dislike_count || 0}</span>
                   </div>
                 </div>
-                
-                {log.note && (
-                  <p className="mt-2 text-sm text-black text-opacity-90 pl-12">{log.note}</p>
-                )}
+                {log.note && <p className="mt-3 text-base text-gray-800 pl-16">{log.note}</p>}
                 {log.image_url && (
-                  <img
-                    src={log.image_url}
-                    alt="Mood log photo"
-                    className="mt-2 w-full max-w-xs rounded-md ml-12 border-2 border-[#D67CF1]"
-                  />
+                  <img src={log.image_url} alt="Mood log" className="mt-3 w-full max-w-sm rounded-lg border-2 border-black ml-16 shadow-md" />
                 )}
               </div>
             ))}
           </div>
         )}
       </div>
-      
-      {/* Color palette reference (hidden) */}
+
+      {/* fe-aliya's color palette reference (hidden) */}
       <div className="hidden">
-        {/* 
-          Color palette from the image:
+        {/* Color palette from the image:
           #F7AEF8 - Light Pink
           #E79FF5 - Pink
           #D67CF1 - Bright Purple
@@ -411,10 +396,30 @@ const DashboardPage = ({ user }) => {
   );
 };
 
-const DashboardPageWithBoundary = () => (
-  <ErrorBoundary>
-    <DashboardPage user={JSON.parse(localStorage.getItem('user'))} />
-  </ErrorBoundary>
-);
+const DashboardPageWithBoundary = ({ user: initialUser }) => { // Accept user as a prop
+  const [user, setUser] = useState(initialUser);
+
+  useEffect(() => {
+    // This allows the component to use a passed user prop or fallback to localStorage
+    // Useful if user object might update during the session without a full page reload
+    if (!initialUser) {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } else {
+        setUser(initialUser); // if user prop is directly passed and updated
+    }
+  }, [initialUser]);
+
+
+  // Pass the resolved user to DashboardPage
+  return (
+    <ErrorBoundary>
+      <DashboardPage user={user} />
+    </ErrorBoundary>
+  );
+};
+
 
 export default DashboardPageWithBoundary;

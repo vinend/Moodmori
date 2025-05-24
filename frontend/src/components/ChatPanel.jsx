@@ -1,8 +1,39 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaChevronRight, FaUser, FaComment, FaSearch, FaPlus, FaTimes, FaUsers, FaImage, FaMapMarkerAlt, FaPaperclip } from 'react-icons/fa';
 import api from '../api/axiosConfig';
 
-const ChatPanel = ({ isOpen, onClose, user }) => {  
+const ChatPanel = ({ isOpen, onClose, user }) => {
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [panelWidth, setPanelWidth] = useState(() => {
+    return localStorage.getItem('chatPanelWidth') || '320';
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartXRef = useRef(null);
+  const dragStartWidthRef = useRef(null);
+
+  // Scaling factor logic
+  const basePanelWidth = 320; // Base width in pixels for scaling
+  const currentPanelWidth = parseInt(panelWidth, 10);
+  const scaleFactor = Math.max(0.75, Math.min(2.0, currentPanelWidth / basePanelWidth));
+
+  // Add scroll event listener
+  useEffect(() => {
+    // Throttled scroll handler for better performance
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollPosition(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // States for panel management
   const [activeChat, setActiveChat] = useState(() => {
     // Try to recover activeChat from localStorage when component mounts
@@ -504,7 +535,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       setError('Failed to send message. Please try again.');
       
       // Remove the temporary message on error
-      setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempMessage.id));
+      setMessages(prevMessages => prevMessages.filter (msg => msg.id !== tempMessage.id))
       // Put the message back in the input
       setMessage(msgContent);
     }
@@ -988,7 +1019,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
         };
         
         // Replace temp message with actual message
-        setMessages(prevMessages => prevMessages.map(msg => 
+        setMessages(prevMessages => prevMessages.map (msg => 
           msg.id === tempMessage.id ? actualMessage : msg
         ));
 
@@ -1010,7 +1041,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
       
       // Remove the temporary message on error
       // Use a safer approach by filtering out any temp messages with IDs that start with 'temp-'
-      setMessages(prevMessages => prevMessages.filter(msg => !msg.id.startsWith('temp-')));
+      setMessages(prevMessages => prevMessages.filter (msg => !msg.id.startsWith('temp-')));
     } finally {
       setLoading(false);
     }
@@ -1020,16 +1051,69 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
   // This allows the active chat to persist
 
   return (
-    <div className={`fixed left-0 top-[64px] bottom-0 w-64 bg-white border-r-2 border-black shadow-lg z-30 flex flex-col font-mono transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <>
+      {/* Chat Toggle Button */}
+      <button 
+        onClick={() => onClose()} // Call onClose to trigger the toggle
+        className={`fixed left-3 cursor-pointer ${scrollPosition > 64 ? 'top-5 opacity-100' : 'opacity-0 pointer-events-none'} z-[9999] bg-black text-white p-2 rounded-full shadow-lg transition-all duration-300 hover:bg-gray-800 hover:scale-110 active:scale-95 ${isOpen ? 'opacity-0 pointer-events-none' : ''}`}
+        aria-label="Open chat"
+      >
+        <FaComment size={20} />
+      </button>
+
+      {/* Chat Panel */}
+      <div 
+        className={`fixed left-0 bg-white border-r-2 border-black shadow-lg z-[9999] flex flex-col font-mono transition-transform duration-300 transform ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        style={{
+          top: scrollPosition > 64 ? '16px' : '90px',
+          bottom: '0',
+          width: `${panelWidth}px`,
+          transition: isDragging 
+            ? 'top 150ms ease-in-out' 
+            : 'transform 300ms ease-in-out, top 150ms ease-in-out',
+          cursor: isDragging ? 'ew-resize' : 'default'
+        }}
+      >
+        {/* Drag Handle */}
+        <div
+          className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-black/20 transition-colors"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+            dragStartXRef.current = e.clientX;
+            dragStartWidthRef.current = parseInt(panelWidth, 10);
+            
+            const handleMouseMove = (mouseMoveEvent) => {
+              // Removed the `if (isDragging)` check here.
+              // If this handler is called, we are effectively dragging.
+              const delta = mouseMoveEvent.clientX - dragStartXRef.current;
+              const newWidth = Math.max(280, Math.min(2500, dragStartWidthRef.current + delta));
+              setPanelWidth(newWidth.toString());
+              localStorage.setItem('chatPanelWidth', newWidth.toString());
+            };
+            
+            const handleMouseUp = () => {
+              setIsDragging(false);
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', handleMouseUp);
+            };
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+          }}
+        />
+        
       {/* Panel Header */}
-      <div className="p-3 border-b-2 border-black flex items-center justify-between bg-white sticky top-0">
-        <h2 className="font-bold text-lg">MESSAGES</h2>
+      <div className="p-3 border-t-2 border-b-2 border-black flex items-center justify-between bg-white sticky top-0">
+        <h2 className="font-bold text-lg" style={{ fontSize: `${1.125 * scaleFactor}rem` }}>MESSAGES</h2>
         <button 
-          onClick={onClose}
+          onClick={() => onClose()} // Call onClose to trigger the toggle
           className="p-1 hover:bg-gray-200 rounded"
           aria-label="Close chat panel"
         >
-          <FaTimes />
+          <FaTimes style={{ fontSize: `${1.25 * scaleFactor}rem` }} />
         </button>
       </div>
 
@@ -1043,12 +1127,15 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                 className="mr-2 p-1 hover:bg-gray-100 rounded"
                 aria-label="Back to conversations"
               >
-                <FaChevronRight className="transform rotate-180" />
+                <FaChevronRight className="transform rotate-180" style={{ fontSize: `${1 * scaleFactor}rem` }} />
               </button>
               {chatUser && (
                 <div className="flex-1 overflow-hidden">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 border-2 border-black rounded-full overflow-hidden mr-2">
+                    <div 
+                      className="border-2 border-black rounded-full overflow-hidden mr-2"
+                      style={{ width: `${2 * scaleFactor}rem`, height: `${2 * scaleFactor}rem` }}
+                    >
                       {chatUser.profile_picture ? (
                         <img
                           src={chatUser.profile_picture}
@@ -1057,15 +1144,16 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <FaUser className="text-gray-500" size={12} />
+                          <FaUser className="text-gray-500" size={Math.round(12 * scaleFactor)} />
                         </div>
                       )}
                     </div>
                     <div>
-                      <div className="flex items-center">                        <span className="font-bold truncate">{chatUser.username || chatUser.name}</span>
+                      <div className="flex items-center">                        
+                        <span className="font-bold truncate" style={{ fontSize: `${1 * scaleFactor}rem` }}>{chatUser.username || chatUser.name}</span>
                         {isGroup && (
                           <>
-                            <span className="ml-1 text-xs bg-gray-200 px-1 rounded">Group</span>
+                            <span className="ml-1 text-xs bg-gray-200 px-1 rounded" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>Group</span>
                             {chatUser.creator_id === parseInt(user?.id, 10) && (
                               <button 
                                 onClick={(e) => {
@@ -1075,6 +1163,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                                   setEditGroupProfilePicture(chatUser.profile_picture || '');
                                 }}
                                 className="ml-1 text-xs bg-gray-100 hover:bg-gray-200 px-1 rounded"
+                                style={{ fontSize: `${0.7 * scaleFactor}rem` }}
                               >
                                 Edit
                               </button>
@@ -1084,7 +1173,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                       </div>
                       
                       {isGroup && chatUser.members && (
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-xs text-gray-500 truncate" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
                           {chatUser.members.length} members
                         </p>
                       )}
@@ -1093,20 +1182,22 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     {/* Group editing interface */}
                   {isGroup && isEditingGroup && (
                     <div className="mt-2 border-t border-gray-200 pt-2">
-                      <div className="text-xs font-bold mb-1">Edit Group</div>
+                      <div className="text-xs font-bold mb-1" style={{ fontSize: `${0.8 * scaleFactor}rem` }}>Edit Group</div>
                       <input 
                         type="text"
                         placeholder="Group Name"
                         value={editGroupName}
                         onChange={(e) => setEditGroupName(e.target.value)}
                         className="w-full p-1 mb-1 border border-gray-300 text-xs"
-                      />                      <label className="block text-xs mb-1">
+                        style={{ fontSize: `${0.75 * scaleFactor}rem` }}
+                      />                      <label className="block text-xs mb-1" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
                         Profile Picture
                         <input 
                           type="file"
                           accept="image/*"
                           onChange={(e) => setEditGroupProfilePicture(e.target.files[0])}
                           className="w-full p-1 mb-1 border border-gray-300 text-xs"
+                          style={{ fontSize: `${0.75 * scaleFactor}rem` }}
                         />
                       </label>
                       <div className="flex space-x-1">
@@ -1117,12 +1208,14 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                             setEditGroupProfilePicture('');
                           }}
                           className="flex-1 bg-gray-100 hover:bg-gray-200 text-xs p-1"
+                          style={{ fontSize: `${0.75 * scaleFactor}rem` }}
                         >
                           Cancel
                         </button>
                         <button
                           onClick={updateGroupDetails}
                           className="flex-1 bg-black text-white hover:bg-gray-800 text-xs p-1"
+                          style={{ fontSize: `${0.75 * scaleFactor}rem` }}
                         >
                           Save
                         </button>
@@ -1131,7 +1224,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   )}
                   
                   {isGroup && chatUser.members && !isEditingGroup && (
-                    <div className="mt-2 text-xs flex flex-wrap gap-1 max-h-10 overflow-y-auto">
+                    <div className="mt-2 text-xs flex flex-wrap gap-1 max-h-10 overflow-y-auto" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>
                       {chatUser.members.map(member => (
                         <span key={member.id} className="bg-gray-100 px-1 py-0.5 rounded">
                           {member.username}
@@ -1150,9 +1243,9 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                 </div>
               ) : error ? (
-                <div className="text-red-600 text-center">{error}</div>              ) : messages.length === 0 ? (
+                <div className="text-red-600 text-center" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{error}</div>              ) : messages.length === 0 ? (
                 <div className="flex justify-center">
-                  <p className="text-sm text-gray-500">This is the beginning of your conversation</p>
+                  <p className="text-sm text-gray-500" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>This is the beginning of your conversation</p>
                 </div>
               ) : (                <>                  {messages.map(msg => (
                     <div
@@ -1163,7 +1256,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                           : 'bg-gray-200'
                       }`}
                     >                      {isGroup && msg.sender_id !== user?.id && (
-                        <p className="text-xs font-bold mb-1">
+                        <p className="text-xs font-bold mb-1" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
                           {msg.username || msg.sender_username || 'Unknown User'}
                         </p>
                       )}                      {/* Handle different message types */}
@@ -1175,6 +1268,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                                 src={msg.image_url} 
                                 alt="Shared image" 
                                 className="max-w-full rounded cursor-pointer"
+                                style={{ maxHeight: `${12.5 * scaleFactor}rem` }} // Approx 200px base
                                 onClick={() => window.open(msg.image_url, '_blank')} 
                                 onLoad={() => console.log('Image loaded successfully:', msg.image_url)}
                                 onError={(e) => {
@@ -1183,7 +1277,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                                   e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Available';
                                 }}
                               />
-                              <p className="text-xs mt-1 opacity-75">
+                              <p className="text-xs mt-1 opacity-75" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>
                                 {msg.content !== 'Sent an image' ? msg.content : ''}
                               </p>
                             </>
@@ -1193,13 +1287,14 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                                 src={msg.image_preview} 
                                 alt="Uploading image" 
                                 className="max-w-full rounded opacity-70"
+                                style={{ maxHeight: `${12.5 * scaleFactor}rem` }}
                               />
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                               </div>
                             </div>
                           ) : (
-                            <p className="text-sm italic">Sending image...</p>
+                            <p className="text-sm italic" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>Sending image...</p>
                           )}
                         </div>                        ) : (msg.type === 'location' || msg.message_type === 'location') ? (
                         // Location message
@@ -1217,7 +1312,10 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                                   
                                   return (
                                     <>
-                                      <div className="h-40 w-full overflow-hidden rounded border border-gray-300">
+                                      <div 
+                                        className="w-full overflow-hidden rounded border border-gray-300"
+                                        style={{ height: `${10 * scaleFactor}rem` }} // Approx 160px base (h-40)
+                                      >
                                         <iframe 
                                           title="Location Map"
                                           width="100%" 
@@ -1233,31 +1331,32 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                                         target="_blank"
                                         rel="noreferrer"
                                         className="flex items-center text-xs underline"
+                                        style={{ fontSize: `${0.875 * scaleFactor}rem` }}
                                       >
                                         <FaMapMarkerAlt className="mr-1" /> Open in Google Maps
                                       </a>
                                     </>
                                   );
                                 }
-                                return <p className="text-sm">{msg.content}</p>;
+                                return <p className="text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{msg.content}</p>;
                               })()}
                             </div>
                           ) : (
-                            <p className="text-sm">{msg.content}</p>
+                            <p className="text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{msg.content}</p>
                           )}
                         </div>
                       ) : (
                         // Regular text message
-                        <p className="text-sm">{msg.content}</p>
+                        <p className="text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{msg.content}</p>
                       )}
                       <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs opacity-70">
+                        <span className="text-xs opacity-70" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
                           {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'sending...'}
                         </span>
                         {msg.sender_id === user?.id && !isGroup && (
-                          <span className="ml-1 text-xs">
+                          <span className="ml-1 text-xs" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
                             {msg.is_read ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ height: `${0.75 * scaleFactor}rem`, width: `${0.75 * scaleFactor}rem` }}>
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
                             ) : null}
@@ -1278,18 +1377,20 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   <img 
                     src={imagePreview} 
                     alt="Selected attachment" 
-                    className="max-h-32 rounded border border-gray-300" 
+                    className="rounded border border-gray-300" 
+                    style={{ maxHeight: `${8 * scaleFactor}rem` }} // Approx 128px base (max-h-32)
                   />
                   <button
                     onClick={cancelImageSelection}
                     className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
                     title="Remove attachment"
                   >
-                    <FaTimes size={10} />
+                    <FaTimes size={Math.round(10 * scaleFactor)} />
                   </button>
                   <button
                     onClick={handleSendImage}
                     className="mt-1 bg-black text-white px-2 py-1 text-xs rounded"
+                    style={{ fontSize: `${0.75 * scaleFactor}rem` }}
                   >
                     Send Image
                   </button>
@@ -1298,7 +1399,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
               
               {/* Show loader when getting location */}
               {isLoadingLocation && (
-                <div className="flex items-center mb-2 text-xs">
+                <div className="flex items-center mb-2 text-xs" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
                   <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin mr-2"></div>
                   Getting your location...
                 </div>
@@ -1306,7 +1407,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
               
               {/* Show location error if any */}
               {locationError && (
-                <p className="text-xs text-red-500 mb-1">{locationError}</p>
+                <p className="text-xs text-red-500 mb-1" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>{locationError}</p>
               )}
               
               {/* Regular message form */}
@@ -1318,16 +1419,16 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     onClick={() => setShowAttachmentOptions(!showAttachmentOptions)}
                     className="h-full px-2 border-2 border-black hover:bg-black hover:text-white"
                   >
-                    <FaPaperclip />
+                    <FaPaperclip style={{ fontSize: `${1.1 * scaleFactor}rem` }} />
                   </button>
                   
                   {/* Attachment dropdown */}
                   {showAttachmentOptions && (
                     <div className="absolute bottom-full left-0 mb-1 bg-white border-2 border-black shadow-md rounded">
-                      <ul>
+                      <ul style={{ fontSize: `${0.875 * scaleFactor}rem` }}>
                         <li>
                           <label className="flex items-center p-2 hover:bg-gray-100 cursor-pointer">
-                            <FaImage className="mr-2" />
+                            <FaImage className="mr-2" style={{ fontSize: `${1 * scaleFactor}rem` }} />
                             <span>Image</span>
                             <input 
                               type="file" 
@@ -1344,7 +1445,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                             onClick={handleSendLocation}
                             className="flex items-center p-2 w-full text-left hover:bg-gray-100"
                           >
-                            <FaMapMarkerAlt className="mr-2" />
+                            <FaMapMarkerAlt className="mr-2" style={{ fontSize: `${1 * scaleFactor}rem` }} />
                             <span>Location</span>
                           </button>
                         </li>
@@ -1359,16 +1460,18 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type your message..."
                   className="flex-1 p-2 border-2 border-black text-sm bg-white"
+                  style={{ fontSize: `${0.875 * scaleFactor}rem` }}
                 />
                 <button 
                   type="submit"
                   disabled={!message.trim() || loading}
                   className="ml-2 px-3 py-2 bg-white border-2 border-black hover:bg-black hover:text-white text-sm disabled:opacity-50"
+                  style={{ fontSize: `${0.875 * scaleFactor}rem` }}
                 >
                   SEND
                 </button>
               </form>
-              {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+              {error && <p className="text-xs text-red-500 mt-1" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>{error}</p>}
             </div>
           </>
         ) : (
@@ -1385,6 +1488,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
+                    style={{ fontSize: `${0.875 * scaleFactor}rem` }}
                   />
                   <button
                     onClick={searchUsers}
@@ -1394,7 +1498,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     {searchLoading ? (
                       <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
                     ) : (
-                      <FaSearch className="text-gray-500" />
+                      <FaSearch className="text-gray-500" style={{ fontSize: `${1 * scaleFactor}rem` }} />
                     )}
                   </button>
                 </div>                <button
@@ -1404,12 +1508,12 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     fetchAllUsers();
                   }}
                 >
-                  <FaPlus />
+                  <FaPlus style={{ fontSize: `${1.1 * scaleFactor}rem` }} />
                 </button>
               </div>
               
               {searchError && (
-                <p className="text-xs text-red-500 mt-1">{searchError}</p>
+                <p className="text-xs text-red-500 mt-1" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>{searchError}</p>
               )}
 
               {/* Search Results */}
@@ -1421,16 +1525,19 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                       className="flex items-center p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200"
                       onClick={() => handleSelectUser(searchUser.id)}
                     >
-                      <div className="w-8 h-8 border-2 border-black rounded-full overflow-hidden mr-2">
+                      <div 
+                        className="border-2 border-black rounded-full overflow-hidden mr-2"
+                        style={{ width: `${2 * scaleFactor}rem`, height: `${2 * scaleFactor}rem` }}
+                      >
                         {searchUser.profile_picture ? (
                           <img src={searchUser.profile_picture} alt={searchUser.username} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            <FaUser size={12} className="text-gray-500" />
+                            <FaUser size={Math.round(12 * scaleFactor)} className="text-gray-500" />
                           </div>
                         )}
                       </div>
-                      <span className="truncate">{searchUser.username}</span>
+                      <span className="truncate" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{searchUser.username}</span>
                     </div>
                   ))}
                 </div>
@@ -1438,14 +1545,14 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
               
               {isSearchOpen && searchResults && searchResults.length === 0 && !searchLoading && searchTerm && (
                 <div className="absolute z-50 mt-1 w-60 bg-white border-2 border-black shadow-lg p-4 text-center">
-                  <p className="text-sm text-gray-500">No users found</p>
+                  <p className="text-sm text-gray-500" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>No users found</p>
                 </div>
               )}
             </div>            {/* Group Creation Interface */}
             {isCreatingGroup ? (
               <div className="flex-1 flex flex-col p-3">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-lg">Create Group</h3>
+                  <h3 className="font-bold text-lg" style={{ fontSize: `${1.125 * scaleFactor}rem` }}>Create Group</h3>
                   <button 
                     onClick={() => {
                       setIsCreatingGroup(false);
@@ -1454,7 +1561,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     }}
                     className="p-1 hover:bg-gray-200 rounded"
                   >
-                    <FaTimes />
+                    <FaTimes style={{ fontSize: `${1.25 * scaleFactor}rem` }} />
                   </button>
                 </div>
                 
@@ -1464,8 +1571,9 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   value={groupName} 
                   onChange={(e) => setGroupName(e.target.value)}
                   className="p-2 mb-2 border-2 border-black"
+                  style={{ fontSize: `${0.875 * scaleFactor}rem` }}
                 />                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>
                     Group Profile Picture (optional)
                   </label>
                   <input 
@@ -1473,11 +1581,12 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     accept="image/*"
                     onChange={(e) => setGroupProfilePicture(e.target.files[0])}
                     className="p-2 w-full border-2 border-black"
+                    style={{ fontSize: `${0.875 * scaleFactor}rem` }}
                   />
                 </div>
                 
                 <div className="mb-3">
-                  <h4 className="font-bold mb-2">Selected Members ({selectedUsers.length})</h4>
+                  <h4 className="font-bold mb-2" style={{ fontSize: `${1 * scaleFactor}rem` }}>Selected Members ({selectedUsers.length})</h4>
                   <div className="flex flex-wrap gap-1 mb-2">
                     {selectedUsers.length > 0 ? (
                       selectedUsers.map(userId => {
@@ -1486,9 +1595,13 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                           <div 
                             key={userId} 
                             className="bg-black text-white px-2 py-1 rounded-full text-xs flex items-center"
+                            style={{ fontSize: `${0.75 * scaleFactor}rem` }}
                           >
                             {user.profile_picture && (
-                              <div className="w-4 h-4 rounded-full overflow-hidden mr-1 flex-shrink-0">
+                              <div 
+                                className="rounded-full overflow-hidden mr-1 flex-shrink-0"
+                                style={{ width: `${1 * scaleFactor}rem`, height: `${1 * scaleFactor}rem` }}
+                              >
                                 <img 
                                   src={user.profile_picture} 
                                   alt={user.username}
@@ -1504,21 +1617,21 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                               }}
                               className="ml-1"
                             >
-                              <FaTimes size={10} />
+                              <FaTimes size={Math.round(10 * scaleFactor)} />
                             </button>
                           </div>
                         ) : null;
                       })
                     ) : (
-                      <span className="text-xs text-gray-500">Select at least 2 members</span>
+                      <span className="text-xs text-gray-500" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>Select at least 2 members</span>
                     )}
                   </div>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto">
                   <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-bold">Select Members</h4>
-                    <span className="text-xs text-gray-500">{filteredMembers.length} users</span>
+                    <h4 className="font-bold" style={{ fontSize: `${1 * scaleFactor}rem` }}>Select Members</h4>
+                    <span className="text-xs text-gray-500" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>{filteredMembers.length} users</span>
                   </div>
                   
                   {/* Search bar for members */}
@@ -1529,13 +1642,14 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                       value={memberSearchTerm}
                       onChange={(e) => setMemberSearchTerm(e.target.value)}
                       className="w-full p-2 pr-8 border-2 border-black text-sm bg-white"
+                      style={{ fontSize: `${0.875 * scaleFactor}rem` }}
                     />
                     {memberSearchTerm && (
                       <button
                         onClick={() => setMemberSearchTerm('')}
                         className="absolute right-2 top-1/2 transform -translate-y-1/2"
                       >
-                        <FaTimes className="text-gray-500" size={12} />
+                        <FaTimes className="text-gray-500" size={Math.round(12 * scaleFactor)} />
                       </button>
                     )}
                   </div>
@@ -1545,7 +1659,7 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                       <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   ) : filteredMembers.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">
+                    <p className="text-sm text-gray-500 text-center py-4" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>
                       {allUsers.length === 0 ? "No users found" : "No matching users found"}
                     </p>
                   ) : (                    <div className="space-y-2">
@@ -1558,7 +1672,10 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                           }`}
                           onClick={() => toggleUserSelection(user.id)}
                         >
-                          <div className="w-8 h-8 border-2 border-black rounded-full overflow-hidden mr-2 flex-shrink-0">
+                          <div 
+                            className="border-2 border-black rounded-full overflow-hidden mr-2 flex-shrink-0"
+                            style={{ width: `${2 * scaleFactor}rem`, height: `${2 * scaleFactor}rem` }}
+                          >
                             {user.profile_picture ? (
                               <img 
                                 src={user.profile_picture} 
@@ -1567,14 +1684,17 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                               />
                             ) : (
                               <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                <FaUser className="text-gray-500" size={12} />
+                                <FaUser className="text-gray-500" size={Math.round(12 * scaleFactor)} />
                               </div>
                             )}
                           </div>
-                          <span className="truncate flex-1">{user.username}</span>
+                          <span className="truncate flex-1" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{user.username}</span>
                           {selectedUsers.some(id => parseInt(id, 10) === parseInt(user.id, 10)) && (
-                            <div className="w-4 h-4 bg-black rounded-full flex items-center justify-center ml-2">
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <div 
+                              className="bg-black rounded-full flex items-center justify-center ml-2"
+                              style={{ width: `${1 * scaleFactor}rem`, height: `${1 * scaleFactor}rem` }}
+                            >
+                              <svg className="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ width: `${0.75 * scaleFactor}rem`, height: `${0.75 * scaleFactor}rem` }}>
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
@@ -1597,19 +1717,12 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                   }}
                   className={`mt-4 p-2 ${(!groupName.trim() || selectedUsers.length < 2) ? 'bg-gray-400' : 'bg-black'} text-white w-full`}
                   disabled={!groupName.trim() || selectedUsers.length < 2}
+                  style={{ fontSize: `${1 * scaleFactor}rem` }}
                 >
                   CREATE GROUP ({selectedUsers.length}/2 selected)
                 </button>
                 
-                <div className="mt-2 p-2 bg-gray-100 text-xs">
-                  <p className="font-bold">Debug Info:</p>
-                  <p>Group Name: {groupName || 'Not set'}</p>
-                  <p>Selected Users: {selectedUsers.length}</p>
-                  <p>Your User ID: {user?.id}</p>
-                  <p className="mt-1">Selected User IDs: {selectedUsers.join(', ')}</p>
-                </div>
-                
-                {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
+                {error && <p className="text-xs text-red-500 mt-2" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>{error}</p>}
               </div>
             ) : (
               /* Conversations List */
@@ -1619,10 +1732,10 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                     <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 ) : conversationsError ? (
-                  <div className="p-4 text-red-600 text-sm">{conversationsError}</div>
+                  <div className="p-4 text-red-600 text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>{conversationsError}</div>
                 ) : conversations.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500 text-sm">
-                    <FaComment className="mx-auto mb-2 text-2xl" />
+                  <div className="p-4 text-center text-gray-500 text-sm" style={{ fontSize: `${0.875 * scaleFactor}rem` }}>
+                    <FaComment className="mx-auto mb-2 text-2xl" style={{ fontSize: `${1.5 * scaleFactor}rem` }} />
                     <p>No conversations yet</p>
                     <p className="mt-1">Search for someone to start chatting!</p>
                   </div>
@@ -1637,7 +1750,10 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                           conversation.is_group
                         )}
                       >
-                        <div className="w-10 h-10 border-2 border-black rounded-full overflow-hidden mr-3 flex-shrink-0">
+                        <div 
+                          className="border-2 border-black rounded-full overflow-hidden mr-3 flex-shrink-0"
+                          style={{ width: `${2.5 * scaleFactor}rem`, height: `${2.5 * scaleFactor}rem` }}
+                        >
                           {conversation.profile_picture ? (
                             <img
                               src={conversation.profile_picture}
@@ -1646,20 +1762,20 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
                             />
                           ) : (
                             <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                              <FaUser className="text-gray-500" />
+                              <FaUser className="text-gray-500" style={{ fontSize: `${1.25 * scaleFactor}rem` }} />
                             </div>
                           )}
                         </div>
                         <div className="overflow-hidden">
                           <div className="flex items-center">
-                            <p className="font-bold truncate">
+                            <p className="font-bold truncate" style={{ fontSize: `${1 * scaleFactor}rem` }}>
                               {conversation.username || conversation.name}
                             </p>
                             {conversation.is_group && (
-                              <span className="ml-1 text-xs bg-gray-200 px-1 rounded">Group</span>
+                              <span className="ml-1 text-xs bg-gray-200 px-1 rounded" style={{ fontSize: `${0.7 * scaleFactor}rem` }}>Group</span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-600 truncate">
+                          <p className="text-xs text-gray-600 truncate" style={{ fontSize: `${0.75 * scaleFactor}rem` }}>
                             {conversation.content}
                           </p>
                         </div>
@@ -1673,7 +1789,8 @@ const ChatPanel = ({ isOpen, onClose, user }) => {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

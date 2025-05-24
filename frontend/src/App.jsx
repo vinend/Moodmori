@@ -90,9 +90,8 @@ function App() {
   };
 
   // Toggle chat panel
-  const toggleChat = () => {
-    setIsChatOpen(prev => !prev);
-  };
+  const toggleChat = () => setIsChatOpen(prev => !prev);
+  const handleChatClose = () => setIsChatOpen(false);
 
   // Handle end of song and play next track
   const handleSongEnd = () => {
@@ -167,7 +166,7 @@ function App() {
           {isAuthenticated && (
             <ChatPanel 
               isOpen={isChatOpen} 
-              onClose={() => setIsChatOpen(false)} 
+              onClose={toggleChat} 
               user={user}
             />
           )}
