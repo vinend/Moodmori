@@ -16,11 +16,23 @@ class CommentController {
     try {
       const userId = req.user.id;
       const { moodLogId } = req.params;
-      const { content } = req.body;
+      let textContent = req.body.content || ''; // Ensure textContent is a string
 
-      // Validate required fields
-      if (!content || !content.trim()) {
-        return responseFormatter.error(res, 'Comment content is required', 400);
+      // Handle image upload
+      let imageUrl = null;
+      if (req.file && req.file.path) {
+        imageUrl = req.file.path;
+      }
+
+      // Validate required fields (content or image must exist)
+      if (!textContent.trim() && !imageUrl) {
+        return responseFormatter.error(res, 'Comment content or image is required', 400);
+      }
+      
+      let finalContent = textContent.trim();
+      // Append image URL to content if an image was uploaded
+      if (imageUrl) {
+        finalContent = finalContent ? `${finalContent}\n[IMAGE]${imageUrl}` : `[IMAGE]${imageUrl}`;
       }
 
       // Check if mood log exists and is public (or belongs to user)
@@ -36,7 +48,7 @@ class CommentController {
       }
 
       // Add the comment
-      const comment = await commentRepository.addComment(moodLogId, userId, content);
+      const comment = await commentRepository.addComment(moodLogId, userId, finalContent);
 
       // Get the full comment with user info
       const comments = await commentRepository.getCommentsByMoodLogId(moodLogId);

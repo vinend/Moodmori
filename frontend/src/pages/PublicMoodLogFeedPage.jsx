@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../api/axiosConfig';
-import { FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown, FaUserCircle, FaComment } from 'react-icons/fa';
+import { FaThumbsUp, FaThumbsDown, FaRegThumbsUp, FaRegThumbsDown, FaUserCircle, FaComment, FaPaperclip } from 'react-icons/fa';
 import { Link } from 'react-router-dom'; // Keep Link if you plan to link to user profiles or full posts
 
 const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
@@ -9,8 +9,19 @@ const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
   const [error, setError] = useState('');
   const [comments, setComments] = useState({}); // Stores comments for each mood log
   const [newCommentText, setNewCommentText] = useState({}); // Stores new comment text for each mood log
+  const [newCommentFile, setNewCommentFile] = useState({}); // Stores new comment file for each mood log
   const [showComments, setShowComments] = useState({}); // To toggle comment visibility
   const [selectedImage, setSelectedImage] = useState(null); // For image modal
+  const fileInputRefs = useRef({}); // To store refs for file inputs
+
+  // Helper function to parse comment content
+  const parseCommentContent = (content) => {
+    if (!content) return { text: '', imageUrl: null };
+    const parts = content.split('\n[IMAGE]');
+    const text = parts[0];
+    const imageUrl = parts.length > 1 ? parts[1] : null;
+    return { text, imageUrl };
+  };
 
   const getMoodColor = (moodName) => {
     const moodColors = {
@@ -63,19 +74,40 @@ const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
       alert('Please log in to comment on posts.');
       return;
     }
-    const content = newCommentText[moodLogId]?.trim();
-    if (!content) {
-      alert('Comment cannot be empty.');
+    let textContent = newCommentText[moodLogId]?.trim() || '';
+    const file = newCommentFile[moodLogId];
+
+    if (!textContent && !file) {
+      alert('Comment cannot be empty and no file selected.');
       return;
     }
 
+    let finalContent = textContent;
+    // The image will be handled by the backend controller, so no separate uploadResponse here.
+    // The backend will store the image and include its URL in the comment content or a separate field.
+
     try {
-      const response = await api.post(`/api/comments/mood-log/${moodLogId}`, { content });
+      const formData = new FormData();
+      formData.append('content', finalContent);
+      if (file) {
+        formData.append('image', file); // 'image' should match the field name expected by multer on the backend
+      }
+
+      // Send comment data and image (if any) to the backend
+      const response = await api.post(`/api/comments/mood-log/${moodLogId}`, formData, {
+        headers: {
+          // Content-Type will be set automatically by the browser for FormData
+        },
+      });
       setComments(prevComments => ({
         ...prevComments,
         [moodLogId]: [...(prevComments[moodLogId] || []), response.data.comment]
       }));
-      setNewCommentText(prevText => ({ ...prevText, [moodLogId]: '' })); // Clear input
+      setNewCommentText(prevText => ({ ...prevText, [moodLogId]: '' }));
+      setNewCommentFile(prevFile => ({ ...prevFile, [moodLogId]: null }));
+      if (fileInputRefs.current[moodLogId]) {
+        fileInputRefs.current[moodLogId].value = null; // Reset file input
+      }
 
       // Optimistically update the comment count in publicLogs
       setPublicLogs(prevLogs =>
@@ -87,7 +119,8 @@ const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
       );
     } catch (err) {
       console.error('Error submitting comment:', err);
-      alert('Failed to submit comment. Please try again.');
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to submit comment. Please try again.';
+      alert(errorMessage);
     }
   };
 
@@ -300,7 +333,17 @@ const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
                                 })}
                             </p>
                           </div>
-                          <p className="text-gray-800 text-sm ml-9">{comment.content}</p>
+                          {parseCommentContent(comment.content).text && (
+                            <p className="text-gray-800 text-sm ml-9 mb-2">{parseCommentContent(comment.content).text}</p>
+                          )}
+                          {parseCommentContent(comment.content).imageUrl && (
+                            <img
+                              src={parseCommentContent(comment.content).imageUrl}
+                              alt="Comment attachment"
+                              className="ml-9 mt-1 max-w-xs max-h-48 object-contain border border-gray-300 rounded cursor-pointer"
+                              onClick={() => setSelectedImage(parseCommentContent(comment.content).imageUrl)}
+                            />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -308,20 +351,38 @@ const PublicMoodLogFeedPage = ({ user }) => { // Add user prop
                     <p className="text-gray-600 text-sm">No comments yet. Be the first to comment!</p>
                   )}
 
-                  <div className="mt-4 flex">
-                    <input
-                      type="text"
+                  <div className="mt-4">
+                    <textarea
                       placeholder="Add a comment..."
                       value={newCommentText[log.id] || ''}
                       onChange={(e) => setNewCommentText(prev => ({ ...prev, [log.id]: e.target.value }))}
-                      className="flex-1 p-2 border-2 border-black rounded-none focus:outline-none focus:border-blue-500 bg-white"
-                    />
-                    <button
-                      onClick={() => handleCommentSubmit(log.id)}
-                      className="ml-2 px-4 py-2 bg-black text-white rounded-none hover:bg-gray-800 transition-colors duration-200 active:animate-button-press"
-                    >
-                      Comment
-                    </button>
+                      className="w-full p-2 border-2 border-black rounded-none focus:outline-none focus:border-blue-500 bg-white resize-none"
+                      rows="2"
+                    ></textarea>
+                    <div className="flex items-center mt-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewCommentFile(prev => ({ ...prev, [log.id]: e.target.files[0] }))}
+                        className="hidden"
+                        id={`comment-file-input-${log.id}`}
+                        ref={el => fileInputRefs.current[log.id] = el}
+                      />
+                      <label
+                        htmlFor={`comment-file-input-${log.id}`}
+                        className="p-2 hover:bg-gray-200 rounded-full cursor-pointer mr-2"
+                        title="Attach image"
+                      >
+                        <FaPaperclip className="w-5 h-5 text-gray-600 hover:text-black" />
+                      </label>
+                      {newCommentFile[log.id] && <span className="text-sm text-gray-500 truncate max-w-[150px]">{newCommentFile[log.id].name}</span>}
+                       <button
+                        onClick={() => handleCommentSubmit(log.id)}
+                        className="ml-auto px-4 py-2 bg-black text-white rounded-none hover:bg-gray-800 transition-colors duration-200 active:animate-button-press"
+                      >
+                        Comment
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
