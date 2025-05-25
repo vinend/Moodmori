@@ -415,11 +415,13 @@ mindmap
       Reactions
       Favorites
       Sharing
+      Feeds
     Chat System
       Personal Chat
       Group Chat
       Media Sharing
       Location Sharing
+      Consultant
     Security
       Authentication
       Authorization
