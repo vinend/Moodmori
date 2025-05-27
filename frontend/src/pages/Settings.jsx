@@ -134,36 +134,25 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
   };
 
   return (
-    <div className="container mx-auto p-4 font-mono ">
-      <h1
-        className="text-2xl font-bold mb-6 "
-        style={{
-          fontSize: "2rem",
-          color: "#74b9ff",
-          textShadow: "2px 2px 6px rgba(0, 0, 0, 0.6)",
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          fontWeight: "bold",
-          marginBottom: "1.5rem",
-        }}
-      >
+    <div className="container mx-auto p-4 pt-20 sm:pt-24 bg-white text-black min-h-screen">
+      <h1 className="text-3xl sm:text-4xl font-heading mb-8 tracking-wider text-black text-center uppercase">
         SETTINGS
       </h1>
 
       {/* Profile Settings Section */}
-      <div className="border-2 border-black p-6 mb-8 bg-gradient-to-r from-[#B449E980] to-[#72DDF780] rounded-[25px]">
-        <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">
+      <div className="border-2 border-black p-6 mb-8 bg-white rounded-none shadow-omori-default">
+        <h2 className="text-2xl font-heading font-bold mb-6 tracking-wider uppercase text-black">
           PROFILE INFORMATION
         </h2>
 
         {profileMessage && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 text-sm">
+          <div className="bg-white border-2 border-black text-black p-3 rounded-none shadow-omori-default mb-4 text-sm">
             {profileMessage}
           </div>
         )}
 
         {profileError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-4 text-sm">
+          <div className="bg-white border-2 border-black text-red-600 p-3 rounded-none shadow-omori-default mb-4 text-sm">
             {profileError}
           </div>
         )}
@@ -172,14 +161,14 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
           {/* Profile Picture Section */}
           <div className="mb-6 flex flex-col items-center">
             <label
-              className="block text-sm font-bold mb-3"
+              className="block text-black font-bold mb-2 uppercase text-sm"
               htmlFor="profile-picture"
             >
               PROFILE PICTURE
             </label>
 
             <div
-              className="w-24 h-24 border-2 border-black rounded-full overflow-hidden mb-2 cursor-pointer relative"
+              className="w-24 h-24 border-2 border-black rounded-none overflow-hidden mb-2 cursor-pointer relative shadow-omori-default"
               onClick={triggerFileInput}
             >
               {previewUrl ? (
@@ -189,12 +178,12 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-500 text-2xl">?</span>
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <span className="text-gray-400 text-2xl">?</span>
                 </div>
               )}
 
-              <div className="absolute bottom-0 right-0 bg-black text-white p-1 rounded-full">
+              <div className="absolute bottom-0 right-0 bg-black text-white p-1 rounded-none">
                 <FaCamera size={12} />
               </div>
             </div>
@@ -208,32 +197,32 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
               onChange={handleProfilePictureChange}
             />
 
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-neutral-600">
               Click to change (Max 2MB)
             </span>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-bold mb-2" htmlFor="username">
+            <label className="block text-black font-bold mb-1 uppercase text-xs" htmlFor="username">
               USERNAME
             </label>
             <input
               id="username"
               type="text"
-              className="border-2 border-black w-full p-2 bg-white text-black bg-gradient-to-r from-gray-300 to-gray-200"
+              className="w-full p-2" // Will inherit global input styles
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-bold mb-2" htmlFor="email">
+            <label className="block text-black font-bold mb-1 uppercase text-xs" htmlFor="email">
               EMAIL
             </label>
             <input
               id="email"
               type="email"
-              className="border-2 border-black w-full p-2 text-black bg-gradient-to-r from-gray-300 to-gray-200"
+              className="w-full p-2" // Will inherit global input styles
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -242,27 +231,27 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
           <button
             type="submit"
             disabled={profileLoading}
-            className="w-full bg-white border-2 border-black py-2 px-4 text-black hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+            className="w-full bg-white text-black border-2 border-black py-2 px-4 hover:bg-black hover:text-white transition-colors disabled:opacity-50 rounded-none shadow-omori-default active:translate-x-px active:translate-y-px active:shadow-none font-mono uppercase"
           >
             {profileLoading ? "UPDATING..." : "UPDATE PROFILE"}
           </button>
         </form>
       </div>
 
-      {/* Password Update Section - remains unchanged */}
-      <div className="border-2 border-black p-6 bg-gradient-to-r from-[#B449E980] to-[#72DDF780] rounded-[25px]">
-        <h2 className="text-3xl font-mono font-bold mb-6 tracking-widest uppercase bg-gradient-to-r from-pink-600 via-pink-500 to-pink-400 text-transparent bg-clip-text drop-shadow-md">
+      {/* Password Update Section */}
+      <div className="border-2 border-black p-6 bg-white rounded-none shadow-omori-default">
+        <h2 className="text-2xl font-heading font-bold mb-6 tracking-wider uppercase text-black">
           CHANGE PASSWORD
         </h2>
 
         {passwordMessage && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 mb-4 text-sm">
+          <div className="bg-white border-2 border-black text-black p-3 rounded-none shadow-omori-default mb-4 text-sm">
             {passwordMessage}
           </div>
         )}
 
         {passwordError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-4 text-sm">
+          <div className="bg-white border-2 border-black text-red-600 p-3 rounded-none shadow-omori-default mb-4 text-sm">
             {passwordError}
           </div>
         )}
@@ -270,7 +259,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
         <form onSubmit={handlePasswordUpdate}>
           <div className="mb-4">
             <label
-              className="block text-sm font-bold mb-2"
+              className="block text-black font-bold mb-1 uppercase text-xs"
               htmlFor="current-password"
             >
               CURRENT PASSWORD
@@ -278,7 +267,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
             <input
               id="current-password"
               type="password"
-              className="border-2 border-black w-full p-2 bg-white text-black bg-gradient-to-r from-gray-300 to-gray-200"
+              className="w-full p-2" // Will inherit global input styles
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
@@ -287,7 +276,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
 
           <div className="mb-4">
             <label
-              className="block text-sm font-bold mb-2"
+              className="block text-black font-bold mb-1 uppercase text-xs"
               htmlFor="new-password"
             >
               NEW PASSWORD
@@ -295,7 +284,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
             <input
               id="new-password"
               type="password"
-              className="border-2 border-black w-full p-2 bg-white text-black bg-gradient-to-r from-gray-300 to-gray-200"
+              className="w-full p-2" // Will inherit global input styles
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
@@ -304,15 +293,15 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
 
           <div className="mb-4">
             <label
-              className="block text-sm font-bold mb-2"
-              htmlFor="confirm-password bg-gradient-to-r from-gray-300 to-gray-200"
+              className="block text-black font-bold mb-1 uppercase text-xs"
+              htmlFor="confirm-password"
             >
               CONFIRM NEW PASSWORD
             </label>
             <input
               id="confirm-password"
               type="password"
-              className="border-2 border-black w-full p-2 bg-white text-black bg-gradient-to-r from-gray-300 to-gray-200 "
+              className="w-full p-2" // Will inherit global input styles
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -322,7 +311,7 @@ const SettingsPage = ({ user, onProfileUpdate }) => {
           <button
             type="submit"
             disabled={passwordLoading}
-            className="w-full bg-white border-2 border-black py-2 px-4 text-black hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+            className="w-full bg-white text-black border-2 border-black py-2 px-4 hover:bg-black hover:text-white transition-colors disabled:opacity-50 rounded-none shadow-omori-default active:translate-x-px active:translate-y-px active:shadow-none font-mono uppercase"
           >
             {passwordLoading ? "UPDATING PASSWORD..." : "UPDATE PASSWORD"}
           </button>

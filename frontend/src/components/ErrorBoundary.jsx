@@ -20,9 +20,12 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       // Fallback UI
       return (
-        <div className="p-4 border-2 border-red-500 bg-red-50 text-red-700 font-mono my-4">
-          <h1>Something went wrong.</h1>
-          <p>Please try refreshing the page or contact support if the issue persists.</p>
+        <div className="p-6 border-2 border-black bg-white text-black font-mono my-4 rounded-none shadow-omori-default text-center">
+          <h1 className="text-2xl font-bold mb-3">SOMETHING WENT WRONG.</h1>
+          <p className="mb-2">An unexpected error has occurred.</p>
+          <p>Please try refreshing the page.</p>
+          {/* You could add a sad ASCII face or a simple pixel art error icon here if desired */}
+          {/* For example: <pre className="mt-3 text-lg">(╥_╥)</pre> */}
         </div>
       );
     }

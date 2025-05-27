@@ -20,8 +20,8 @@ const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
       <div className="flex items-center justify-between">
         {/* Left Section: Profile Pic, Title, Username, Chat Toggle - Structure from master */}
         <div className="flex items-center">
-          {/* Profile Picture - Using master's styling (black border, gray placeholder, responsive size) */}
-          <div className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-black rounded-full overflow-hidden mr-3 flex-shrink-0">
+          {/* Profile Picture */}
+          <div className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-black rounded-none overflow-hidden mr-3 flex-shrink-0 shadow-omori-default">
             {user?.profilePicture ? (
               <img
                 src={user.profilePicture}
@@ -29,37 +29,37 @@ const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              // Placeholder icon style from master
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <FaUser className="text-2xl text-gray-500" />
+              // Placeholder icon
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                <FaUser className="text-2xl text-gray-400" />
               </div>
             )}
           </div>
-          {/* Title and Username - Using master's styling */}
+          {/* Title and Username */}
           <div className="mr-4">
             <h1 className="font-heading font-bold text-2xl sm:text-3xl uppercase tracking-wider text-black">MOOD MORI</h1>
-            <p className="text-sm text-gray-600">{user?.username || 'Unknown User'}</p>
+            <p className="text-sm text-neutral-700">{user?.username || 'Unknown User'}</p>
           </div>
-          {/* Chat Toggle Button - Using master's styling for consistency and interactivity */}
+          {/* Chat Toggle Button */}
           <button
             onClick={onChatToggle}
-            className={`p-2 border-2 transition-colors duration-150 active:animate-button-press ${
+            className={`p-2 border-2 border-black rounded-none transition-colors duration-150 ${
               isChatOpen 
-              ? 'bg-black text-white border-black' 
-              : 'text-black border-transparent hover:bg-black hover:text-white hover:border-black'
+              ? 'bg-black text-white shadow-none translate-x-px translate-y-px' 
+              : 'bg-white text-black hover:bg-black hover:text-white shadow-omori-default'
             }`}
             title="Toggle Messages"
             aria-label="Toggle Messages"
           >
-            <FaComment className="text-xl" /> {/* Icon size from master */}
+            <FaComment className="text-xl" />
           </button>
         </div>
 
-        {/* Hamburger Menu Button (Mobile) - From master */}
+        {/* Hamburger Menu Button (Mobile) */}
         <div className="sm:hidden">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 text-black focus:outline-none active:animate-button-press"
+            className="p-2 text-black focus:outline-none rounded-none border-2 border-black shadow-omori-default active:translate-x-px active:translate-y-px active:shadow-none"
             aria-label="Toggle navigation menu"
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-menu"
@@ -68,7 +68,7 @@ const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
           </button>
         </div>
 
-        {/* Navigation Links (Desktop and Mobile Menu) - Structure and classes from master */}
+        {/* Navigation Links (Desktop and Mobile Menu) */}
         <div
           id="mobile-menu"
           className={`
@@ -77,35 +77,30 @@ const Navbar = ({ user, onLogout, onChatToggle, isChatOpen }) => {
             sm:flex sm:flex-row sm:items-center sm:space-x-3 sm:border-none sm:py-0 z-30
           `}
         >
-          <NavLink to="/dashboard" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+          <NavLink to="/dashboard" className={({ isActive }) => `${navLinkClasses({ isActive })} rounded-none ${isActive ? 'shadow-none translate-x-px translate-y-px' : 'shadow-omori-default'}`} onClick={() => setIsMobileMenuOpen(false)}>
             <FaHome className={`${iconSize} mr-2`} /> Home
           </NavLink>
-          <NavLink to="/log" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+          <NavLink to="/log" className={({ isActive }) => `${navLinkClasses({ isActive })} rounded-none ${isActive ? 'shadow-none translate-x-px translate-y-px' : 'shadow-omori-default'}`} onClick={() => setIsMobileMenuOpen(false)}>
             <FaBook className={`${iconSize} mr-2`} /> Log
           </NavLink>
-          <NavLink to="/favorites" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+          <NavLink to="/favorites" className={({ isActive }) => `${navLinkClasses({ isActive })} rounded-none ${isActive ? 'shadow-none translate-x-px translate-y-px' : 'shadow-omori-default'}`} onClick={() => setIsMobileMenuOpen(false)}>
             <FaStar className={`${iconSize} mr-2`} /> Favorites
           </NavLink>
-          <NavLink to="/stats" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+          <NavLink to="/stats" className={({ isActive }) => `${navLinkClasses({ isActive })} rounded-none ${isActive ? 'shadow-none translate-x-px translate-y-px' : 'shadow-omori-default'}`} onClick={() => setIsMobileMenuOpen(false)}>
             <FaChartBar className={`${iconSize} mr-2`} /> Stats
           </NavLink>
-          <NavLink to="/public-feed" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+          <NavLink to="/public-feed" className={({ isActive }) => `${navLinkClasses({ isActive })} rounded-none ${isActive ? 'shadow-none translate-x-px translate-y-px' : 'shadow-omori-default'}`} onClick={() => setIsMobileMenuOpen(false)}>
             <FaUsers className={`${iconSize} mr-2`} /> Feed
           </NavLink>
-          <NavLink to="/consultant" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+          <NavLink to="/consultant" className={({ isActive }) => `${navLinkClasses({ isActive })} rounded-none ${isActive ? 'shadow-none translate-x-px translate-y-px' : 'shadow-omori-default'}`} onClick={() => setIsMobileMenuOpen(false)}>
             <FaBrain className={`${iconSize} mr-2`} /> Consultant
           </NavLink>
-          <NavLink to="/settings" className={navLinkClasses} onClick={() => setIsMobileMenuOpen(false)}>
+          <NavLink to="/settings" className={({ isActive }) => `${navLinkClasses({ isActive })} rounded-none ${isActive ? 'shadow-none translate-x-px translate-y-px' : 'shadow-omori-default'}`} onClick={() => setIsMobileMenuOpen(false)}>
             <FaCog className={`${iconSize} mr-2`} /> Settings
           </NavLink>
           <button
             onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}
-            // Applying base link styles, ensuring it behaves like other nav items
-            // The specific class from master was a bit complex; this simplifies while maintaining behavior.
-            // For a distinct logout color (like red from fe-aliya), you could add 'text-red-500 hover:text-red-700' here
-            // alongside other classes from navLinkClasses if needed, or create a separate class.
-            // For now, it will match other inactive links' hover behavior.
-            className={`${navLinkClasses({isActive: false})} w-full sm:w-auto`}
+            className={`${navLinkClasses({isActive: false})} w-full sm:w-auto rounded-none shadow-omori-default`}
             aria-label="Logout"
           >
             <FaSignOutAlt className={`${iconSize} mr-2`} /> Logout

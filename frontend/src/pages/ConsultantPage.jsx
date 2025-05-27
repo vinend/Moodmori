@@ -63,14 +63,14 @@ const ConsultantPage = ({ user }) => {
   };
 
   return (
-    <div className="white-space flex flex-col items-center p-4 pt-20 sm:pt-24"> {/* Added padding-top for navbar */}
-      <div className="omori-card w-full max-w-3xl flex flex-col h-[calc(100vh-10rem)] sm:h-[calc(100vh-12rem)] overflow-hidden">
-        <header className="bg-[var(--white-space)] p-4 border-b-2 border-[var(--black-space)]">
-          <h1 className="text-2xl text-[var(--black-space)] text-center">Mental Health Consultant</h1>
-          <p className="text-sm text-center text-[var(--black-space)]">An Omori Themed Listener</p>
+    <div className="bg-white text-black flex flex-col items-center p-4 pt-20 sm:pt-24 min-h-screen"> {/* Applied bg-white, text-black, and min-h-screen */}
+      <div className="w-full max-w-3xl flex flex-col h-[calc(100vh-10rem)] sm:h-[calc(100vh-12rem)] overflow-hidden bg-white border-2 border-black shadow-omori-default rounded-none"> {/* Replaced omori-card */}
+        <header className="bg-white p-4 border-b-2 border-black"> {/* Replaced var() */}
+          <h1 className="text-2xl text-black text-center font-heading uppercase">Mental Health Consultant</h1> {/* Replaced var(), added font-heading */}
+          <p className="text-sm text-black text-center">An Omori Themed Listener</p> {/* Replaced var() */}
         </header>
 
-        <div className="flex-grow p-4 sm:p-6 space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--black-space)] scrollbar-track-[var(--white-space)]">
+        <div className="flex-grow p-4 sm:p-6 space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-black scrollbar-track-white"> {/* Replaced var() */}
           {messages.map((msg, index) => (
             <div
               key={index}
@@ -79,10 +79,10 @@ const ConsultantPage = ({ user }) => {
               }`}
             >
               <div
-                className={`max-w-xs sm:max-w-md lg:max-w-lg px-4 py-3 shadow omori-card ${
+                className={`max-w-xs sm:max-w-md lg:max-w-lg px-4 py-3 shadow-omori-default rounded-none ${
                   msg.role === 'user'
-                    ? 'bg-[var(--black-space)] text-[var(--white-space)]'
-                    : 'bg-[var(--white-space)] text-[var(--black-space)]'
+                    ? 'bg-black text-white'
+                    : 'bg-white text-black border-2 border-black' // Added border for assistant messages
                 }`}
               >
                 <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -92,31 +92,31 @@ const ConsultantPage = ({ user }) => {
           <div ref={messagesEndRef} />
           {isLoading && (
             <div className="flex justify-center py-2">
-              <FaSpinner className="animate-spin text-[var(--highlight-color)] text-2xl" />
+              <FaSpinner className="animate-spin text-black text-2xl" /> {/* Changed color to black */}
             </div>
           )}
            {error && (
             <div className="flex justify-center py-2">
-              <p className="text-[var(--highlight-color)] text-sm">{error}</p>
+              <p className="text-red-600 text-sm">{error}</p> {/* Changed color to Tailwind red */}
             </div>
           )}
         </div>
 
         <form
           onSubmit={handleSendMessage}
-          className="bg-[var(--white-space)] p-3 sm:p-4 border-t-2 border-[var(--black-space)] flex items-center"
+          className="bg-white p-3 sm:p-4 border-t-2 border-black flex items-center"
         >
           <input
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Type your message here... how are you feeling?"
-            className="flex-grow p-3 omori-input focus:ring-0 focus:outline-none placeholder-[var(--neutral-gray)] bg-white"
+            className="flex-grow p-3 placeholder-gray-400 bg-white"
             disabled={isLoading}
           />
           <button
             type="submit"
-            className="omori-btn p-3 disabled:opacity-50"
+            className="p-3 disabled:opacity-50 bg-white text-black border-2 border-black shadow-omori-default hover:bg-black hover:text-white rounded-none active:translate-x-px active:translate-y-px active:shadow-none ml-2"
             disabled={isLoading}
           >
             {isLoading ? (

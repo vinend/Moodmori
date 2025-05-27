@@ -9,7 +9,7 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
+  /* color-scheme: light dark; Removed to enforce light theme */
   color: #000000;
   background-color: #FFFFFF;
 
@@ -63,14 +63,16 @@ button {
   font-size: 1.1em; /* Adjusted font size */
   font-weight: normal; /* Pixel fonts are often not bold */
   font-family: 'VT323', monospace; /* Ensure buttons use the font */
-  background-color: #f0f0f0; /* Lighter gray for button */
+  background-color: #FFFFFF; /* White background for buttons */
+  color: #000000; /* Black text for buttons */
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.2s, color 0.2s, transform 0.1s, box-shadow 0.1s;
   border: 2px solid black; /* Pixel border */
   box-shadow: 4px 4px 0px rgba(0,0,0); /* Pixel shadow */
 }
 button:hover {
-  background-color: #e0e0e0; /* Darker on hover */
+  background-color: #000000; /* Black background on hover */
+  color: #FFFFFF; /* White text on hover */
 }
 button:active {
   transform: translate(2px, 2px); /* Button press effect */
@@ -124,5 +126,42 @@ a:hover {
   background-color: #000000; /* Black background for OMORI theme */
   z-index: 50;
   color: white;
+  font-family: 'VT323', monospace;
+}
+
+/* Base styles for input fields and textareas */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="search"],
+input[type="number"],
+textarea {
+  font-family: 'VT323', monospace;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 0.5em 0.8em; /* Adjusted padding */
+  background-color: #FFFFFF;
+  color: #000000;
+  box-shadow: 4px 4px 0px rgba(0,0,0);
+  outline: none;
+  transition: box-shadow 0.1s, transform 0.1s;
+  font-size: 1em; /* Match base font size */
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="search"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+  box-shadow: 2px 2px 0px rgba(0,0,0);
+  transform: translate(2px, 2px);
+}
+
+/* Placeholder styling for inputs */
+input::placeholder,
+textarea::placeholder {
+  color: #a0a0a0; /* Lighter gray for placeholder */
+  opacity: 1; /* Ensure placeholder is visible */
   font-family: 'VT323', monospace;
 }

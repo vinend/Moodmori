@@ -10,7 +10,7 @@ const AudioPlayer = forwardRef(({ src, songName, onPrevious, onNext, onEnded }, 
   const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Extract filename from path if songName is not provided
-  const displayName = songName || (src ? src.split('/').pop().replace(/\.[^/.]+$/, '') : "JUDUL LAGU..");
+  const displayName = songName || (src ? src.split('/').pop().replace(/\.[^/.]+$/, '') : "TRACK NAME");
   
   useEffect(() => {
     // Initialize audio
@@ -106,24 +106,24 @@ const AudioPlayer = forwardRef(({ src, songName, onPrevious, onNext, onEnded }, 
   };
 
   return (
-    <div className={`fixed bottom-4 right-4 z-50 bg-white border-2 border-black rounded shadow-md flex flex-col ${isCollapsed ? 'w-16 p-2' : 'w-80 p-3'} transition-all duration-300`}>
+    <div className={`fixed bottom-4 right-4 z-50 bg-white border-2 border-black rounded-none shadow-omori-default flex flex-col ${isCollapsed ? 'w-16 p-2' : 'w-80 p-3'} transition-all duration-300`}>
       <audio ref={ref} src={src} onEnded={onEnded} />
       
       {/* Header section with collapse button and song title */}
       <div className="relative flex items-center mb-3">
-        {/* Collapse toggle button - moved to the left side for better access */}
+        {/* Collapse toggle button */}
         <button 
           onClick={toggleCollapse}
-          className="text-purple-500 hover:text-purple-700 focus:outline-none mr-2 z-10"
+          className="text-black hover:bg-gray-200 focus:outline-none mr-2 z-10 p-1"
           aria-label={isCollapsed ? "Expand" : "Collapse"}
         >
           {isCollapsed ? <FaChevronUp size={14} /> : <FaChevronDown size={14} />}
         </button>
 
-        {/* Song name display with marquee effect - only show when expanded */}
+        {/* Song name display - only show when expanded */}
         {!isCollapsed && (
           <div className="flex-1 overflow-hidden h-6">
-            <div className={`whitespace-nowrap text-purple-500 font-medium ${displayName.length > 20 ? 'animate-marquee' : 'text-center'} font-['Press_Start_2P'] text-sm`}>
+            <div className={`whitespace-nowrap text-black font-medium ${displayName.length > 20 ? 'animate-marquee' : 'text-center'} text-sm`}>
               {displayName}
             </div>
           </div>
@@ -135,53 +135,53 @@ const AudioPlayer = forwardRef(({ src, songName, onPrevious, onNext, onEnded }, 
         <>
           {/* Progress bar */}
           <div className="flex items-center space-x-2 mb-3">
-            <span className="text-stone-500 text-xs w-8 text-right font-['Radio_Canada'] font-bold">{formatTime(currentTime)}</span>
+            <span className="text-black text-xs w-8 text-right font-bold">{formatTime(currentTime)}</span>
             <input
               type="range"
               min="0"
               max={duration || 100}
               value={currentTime}
               onChange={handleProgressChange}
-              className="flex-1 h-2 bg-zinc-300 rounded-lg appearance-none cursor-pointer"
+              className="flex-1 h-2 bg-gray-300 rounded-none appearance-none cursor-pointer"
               style={{
-                background: `linear-gradient(to right, #B449E9 ${(currentTime / (duration || 1)) * 100}%, #D9D9D9 ${(currentTime / (duration || 1)) * 100}%)`,
+                background: `linear-gradient(to right, #000000 ${(currentTime / (duration || 1)) * 100}%, #D1D5DB ${(currentTime / (duration || 1)) * 100}%)`, // D1D5DB is gray-300
               }}
             />
-            <span className="text-stone-500 text-xs w-8 text-left font-['Radio_Canada'] font-bold">{formatTime(duration)}</span>
+            <span className="text-black text-xs w-8 text-left font-bold">{formatTime(duration)}</span>
           </div>
           
-          {/* Controls - increased spacing and padding for better touch targets */}
-          <div className="flex items-center justify-between px-2">
+          {/* Controls */}
+          <div className="flex items-center justify-between px-1">
             <button 
               onClick={handlePrevious}
-              className="text-purple-500 hover:text-purple-700 focus:outline-none p-2 bg-white rounded-full border border-purple-300"
+              className="text-black bg-white border-2 border-black hover:bg-black hover:text-white focus:outline-none p-2 rounded-none shadow-omori-default active:translate-y-px active:shadow-sm"
               aria-label="Previous"
             >
-              <FaStepBackward size={18} />
+              <FaStepBackward size={16} />
             </button>
             
             <button 
               onClick={togglePlayPause}
-              className="text-white bg-purple-500 hover:bg-purple-700 focus:outline-none p-3 rounded-full"
+              className="text-white bg-black hover:bg-gray-700 focus:outline-none p-3 rounded-none border-2 border-black shadow-omori-default active:translate-y-px active:shadow-sm"
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
-              {isPlaying ? <FaPause size={22} /> : <FaPlay size={22} className="ml-1" />}
+              {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} className="ml-0.5" />} {/* Adjusted icon alignment */}
             </button>
             
             <button 
               onClick={handleNext}
-              className="text-purple-500 hover:text-purple-700 focus:outline-none p-2 bg-white rounded-full border border-purple-300"
+              className="text-black bg-white border-2 border-black hover:bg-black hover:text-white focus:outline-none p-2 rounded-none shadow-omori-default active:translate-y-px active:shadow-sm"
               aria-label="Next"
             >
-              <FaStepForward size={18} />
+              <FaStepForward size={16} />
             </button>
             
             <button 
               onClick={toggleMute}
-              className="text-purple-500 hover:text-purple-700 focus:outline-none p-2 bg-white rounded-full border border-purple-300"
+              className="text-black bg-white border-2 border-black hover:bg-black hover:text-white focus:outline-none p-2 rounded-none shadow-omori-default active:translate-y-px active:shadow-sm"
               aria-label={isMuted ? 'Unmute' : 'Mute'}
             >
-              {isMuted ? <FaVolumeMute size={18} /> : <FaVolumeUp size={18} />}
+              {isMuted ? <FaVolumeMute size={16} /> : <FaVolumeUp size={16} />}
             </button>
           </div>
         </>
@@ -189,13 +189,13 @@ const AudioPlayer = forwardRef(({ src, songName, onPrevious, onNext, onEnded }, 
       
       {/* Collapsed view - only show play/pause button */}
       {isCollapsed && (
-        <div className="flex justify-center">
+        <div className="flex justify-center items-center h-full">
           <button 
             onClick={togglePlayPause}
-            className="text-white bg-purple-500 hover:bg-purple-700 focus:outline-none p-2 rounded-full"
+            className="text-white bg-black hover:bg-gray-700 focus:outline-none p-2 rounded-none border-2 border-black shadow-omori-default active:translate-y-px active:shadow-sm"
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
-            {isPlaying ? <FaPause size={22} /> : <FaPlay size={22} className="ml-1" />}
+            {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} className="ml-0.5" />}
           </button>
         </div>
       )}

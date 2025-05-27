@@ -55,6 +55,7 @@ const handleConsultantChat = async (req, res) => {
     const dbHistory = historyResult.rows.reverse().map(row => ({ role: row.role, content: row.content })); // Reverse to maintain chronological order for API
 
     const messagesForAPI = [
+      
       {
         role: 'system',
         content: OMORI_SYSTEM_PROMPT,

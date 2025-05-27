@@ -1,413 +1,90 @@
-#root {
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  padding: 0%;
-}
-
-/* Responsive padding for larger screens */
-@media (min-width: 768px) {
-  #root {
-    padding: 2rem;
+@keyframes drawLine {
+  0% {
+    stroke-dashoffset: 1000;
+  }
+  100% {
+    stroke-dashoffset: 0;
   }
 }
 
-.logo {
-  height: 4em;
-  padding: 1em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-
-@media (min-width: 768px) {
-  .logo {
-    height: 6em;
-    padding: 1.5em;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
+@keyframes drawDoodle {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: scale(0.95);
   }
   to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-@keyframes slide-up {
-  0% {
-    transform: translateY(0);
     opacity: 1;
-  }
-  100% {
-    transform: translateY(-100%);
-    opacity: 0;
+    transform: scale(1);
   }
 }
 
-@keyframes fade-in {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.fade-in {
-  animation: fade-in 1s ease-in-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.8s ease-in-out forwards;
-}
-
-.card {
-  padding: 1em;
-}
-
-@media (min-width: 768px) {
-  .card {
-    padding: 2em;
-  }
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-/* Added helper classes for mobile optimization */
-.mobile-container {
-  padding: 0.75rem;
-  width: 100%;
-}
-
-.mobile-text {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-}
-
-@media (min-width: 768px) {
-  .mobile-text {
-    font-size: 1rem;
-    line-height: 1.5rem;
-  }
-}
-
-/* OMORI-inspired color palette */
-:root {
-  --white-space: #FFFFFF;
-  --black-space: #000000;
-  --text-color: #000000;
-  --highlight-color: #FF0000;
-  --neutral-gray: #CCCCCC;
-  --shadow-color: rgba(0, 0, 0, 0.2);
-  
-  /* Mood colors */
-  --mood-happy: #FFE156;
-  --mood-sad: #5690FF;
-  --mood-angry: #FF5656;
-  --mood-afraid: #BF7DFF;
-  --mood-neutral: #E5E5E5;
-}
-
-/* Global Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Omori', 'Courier New', monospace;
-}
-
-@font-face {
-  font-family: 'Omori';
-  src: url('/fonts/omori.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
-
-body {
-  background-color: var(--white-space);
-  color: var(--text-color);
-  line-height: 1.6;
-}
-
-/* Container Styles */
-.app-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.main-content {
-  flex: 1;
-  padding: 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* White Space Style */
-.white-space {
-  background-color: var(--white-space);
-  color: var(--black-space);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-}
-
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Omori', 'Courier New', monospace;
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-}
-
-/* Buttons */
-.omori-btn {
-  background: var(--white-space);
-  border: 2px solid var(--black-space);
-  color: var(--black-space);
-  padding: 0.5rem 1rem;
-  font-family: 'Omori', 'Courier New', monospace;
-  text-transform: uppercase;
-  cursor: pointer;
+/* Doodle background animation */
+.bg-omori-doodle-background {
+  background: #fff;
   position: relative;
-  transition: all 0.2s ease;
-  font-weight: bold;
+  overflow: hidden;
 }
 
-.omori-btn:hover {
-  background: var(--black-space);
-  color: var(--white-space);
+.bg-omori-doodle-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath fill='none' stroke='rgba(180, 73, 233, 0.1)' stroke-width='1' d='M10,10 Q30,5 50,10 T90,10 M10,30 Q30,35 50,30 T90,30 M10,50 Q30,45 50,50 T90,50'/%3E%3C/svg%3E");
+  background-size: 100px 100px;
+  animation: drawDoodle 2s ease-in-out;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.omori-btn:active {
-  transform: translateY(2px);
-}
-
-/* Form Controls */
-.omori-input {
-  padding: 0.75rem;
-  border: 2px solid var(--black-space);
-  font-family: 'Omori', 'Courier New', monospace;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-.omori-input:focus {
-  outline: none;
-  border-color: var(--highlight-color);
-}
-
-/* Cards */
-.omori-card {
-  background: var(--white-space);
-  border: 2px solid var(--black-space);
-  padding: 1rem;
-  margin-bottom: 1rem;
-  position: relative;
-  box-shadow: 5px 5px 0 var(--shadow-color);
-}
-
-/* Loading Animation */
-.loading-screen {
-  background-color: var(--black-space);
-  color: var(--white-space);
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.loading-text {
-  font-size: 1.5rem;
-  margin-top: 1rem;
-  letter-spacing: 0.2em;
-}
-
-/* Pixelated Character Animation */
-.character {
-  width: 64px;
-  height: 64px;
-  background-image: url('/images/omori_sprite.png');
-  background-size: cover;
-  image-rendering: pixelated;
-  animation: breathe 2s infinite ease-in-out;
-}
-
-@keyframes breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-/* Login/Register Container */
+/* Login/Register container animations */
 .auth-container {
-  max-width: 400px;
-  margin: 10vh auto;
-  padding: 2rem;
-  border: 2px solid var(--black-space);
-  background-color: var(--white-space);
-  box-shadow: 8px 8px 0 var(--shadow-color);
+  animation: float 6s ease-in-out infinite;
+  position: relative;
 }
 
-/* Navbar */
-.navbar {
-  background-color: var(--white-space);
-  border-bottom: 2px solid var(--black-space);
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.auth-container::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border: 2px solid black;
+  opacity: 0.1;
+  animation: drawLine 2s ease-in-out forwards;
 }
 
-.nav-links {
-  display: flex;
-  gap: 1rem;
-  list-style: none;
-}
-
-.nav-link {
-  text-decoration: none;
-  color: var(--black-space);
-  text-transform: uppercase;
-  font-weight: bold;
-  transition: all 0.2s ease;
-  padding: 0.5rem;
-  border: 2px solid transparent;
-}
-
-.nav-link:hover, .nav-link.active {
-  border-color: var(--black-space);
-}
-
-/* Mood Indicators */
-.mood-indicator {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 0.5rem;
-}
-
-.mood-happy { background-color: var(--mood-happy); }
-.mood-sad { background-color: var(--mood-sad); }
-.mood-angry { background-color: var(--mood-angry); }
-.mood-afraid { background-color: var(--mood-afraid); }
-.mood-neutral { background-color: var(--mood-neutral); }
-
-/* Grid Layout */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-}
-
-/* Audio Player */
-.audio-controls {
+/* Omori character silhouettes */
+.omori-silhouette {
   position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  z-index: 100;
-  background: var(--white-space);
-  border: 2px solid var(--black-space);
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  bottom: 20px;
+  width: 100px;
+  height: 150px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.1;
+  animation: float 4s ease-in-out infinite;
 }
 
-.audio-controls button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.2rem;
-  padding: 0.25rem;
+.omori-silhouette-left {
+  left: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 80'%3E%3Cpath d='M25,0 L50,80 L0,80 Z' fill='%23000'/%3E%3C/svg%3E");
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .navbar {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .nav-links {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-}
-
-/* Animation for Page Transitions */
-.page-transition-enter {
-  opacity: 0;
-  transform: scale(0.9);
-}
-
-.page-transition-enter-active {
-  opacity: 1;
-  transform: translateX(0);
-  transition: opacity 300ms, transform 300ms;
-}
-
-.page-transition-exit {
-  opacity: 1;
-}
-
-.page-transition-exit-active {
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 300ms, transform 300ms;
-}
-
-/* Calendar-style mood log display */
-.calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
-}
-
-.calendar-day {
-  aspect-ratio: 1;
-  border: 1px solid var(--black-space);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Stats Page */
-.stats-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
-@media (max-width: 768px) {
-  .stats-container {
-    grid-template-columns: 1fr;
-  }
+.omori-silhouette-right {
+  right: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 80'%3E%3Cpath d='M25,0 L50,80 L0,80 Z' fill='%23000'/%3E%3C/svg%3E");
+  transform: scaleX(-1);
 }

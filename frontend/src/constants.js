@@ -2,7 +2,7 @@
 export const API_URL = 'http://localhost:3000';
 
 // Set this to false to use actual database data
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 // Demo data for offline testing
 export const DEMO_DATA = {

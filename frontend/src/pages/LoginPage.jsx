@@ -52,112 +52,90 @@ const LoginPage = ({ onLogin }) => {
   );
 
   return (
-    // Base structure and background from fe-aliya
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-stone-100 p-4">
-      {/* Form container styling from fe-aliya, with entry animation from master */}
-      <div className="w-full max-w-md bg-white p-8 relative shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up">
-        {/* Corner decorations from fe-aliya */}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4 bg-omori-doodle-background"> {/* Added bg-omori-doodle-background */}
+      <div className="w-full max-w-md bg-white p-8 relative border-2 border-black rounded-none shadow-omori-default auth-container">
+        <div className="omori-silhouette omori-silhouette-left"></div>
+        <div className="omori-silhouette omori-silhouette-right"></div>
         <CornerDecoration position="left-6 top-6" />
         <CornerDecoration position="right-6 top-6 rotate-90" />
         <CornerDecoration position="left-6 bottom-6 -rotate-90" />
         <CornerDecoration position="right-6 bottom-6 rotate-180" />
         
-        {/* Title and subtitle from fe-aliya */}
-        <h1 className="text-xl font-['Press_Start_2P'] mb-2 text-purple-500 text-center">
+        <h1 className="text-2xl font-heading mb-2 text-purple-500 text-center uppercase">
           START<br/>MOODMORI
         </h1>
-        <p className="mb-8 text-center text-xs text-stone-500 font-['Radio_Canada']">
+        <p className="mb-8 text-center text-sm text-neutral-700 font-mono">
           Track your emotional journey in the style of OMORI
         </p>
 
-        {/* Error message styling: fe-aliya font, master border strength */}
         {error && (
-          <div className="bg-red-100 border-2 border-red-500 text-red-700 px-4 py-3 mb-4 font-['Radio_Canada'] text-xs">
+          <div className="bg-white border-2 border-black text-red-600 p-3 rounded-none shadow-omori-default mb-4 font-mono text-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Email input from fe-aliya */}
           <div className="mb-4">
-            <label className="block text-xs mb-1 text-black font-['Radio_Canada']" htmlFor="email">
+            <label className="block text-xs mb-1 text-black font-mono uppercase" htmlFor="email">
               Email
             </label>
             <div className="relative">
               <input
                 id="email"
                 type="email"
-                className="border border-black w-full p-2 h-11 pl-12 bg-white text-black font-['Radio_Canada'] focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full p-2 h-11 pl-12 font-mono" // Inherits global styles
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder="ENTER YOUR EMAIL"
                 required
               />
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <EmailIcon />
               </div>
             </div>
           </div>
 
-          {/* Password input from fe-aliya */}
           <div className="mb-6">
-            <label className="block text-xs mb-1 text-black font-['Radio_Canada']" htmlFor="password">
+            <label className="block text-xs mb-1 text-black font-mono uppercase" htmlFor="password">
               Password
             </label>
             <div className="relative">
               <input
                 id="password"
                 type="password"
-                className="border border-black w-full p-2 h-11 pl-12 bg-white text-black font-['Radio_Canada'] focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full p-2 h-11 pl-12 font-mono" // Inherits global styles
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder="ENTER YOUR PASSWORD"
                 required
               />
-              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <LockIcon />
               </div>
             </div>
           </div>
 
-          {/* Submit button from fe-aliya */}
           <button
             type="submit"
             disabled={loading}
-            className={`w-full h-11 font-bold text-lg text-white rounded-[20px] font-['Radio_Canada'] py-2 transition-all duration-200
+            className={`w-full h-11 font-mono font-bold text-lg text-white rounded-none border-2 border-black shadow-omori-default py-2 transition-all duration-200 uppercase
               ${loading 
-                ? 'bg-gray-400 cursor-not-allowed shadow-none' 
-                : 'bg-gradient-to-r from-purple-500/80 to-cyan-300/80 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] hover:from-purple-600/90 hover:to-cyan-400/90 active:shadow-none active:translate-y-1'
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-purple-500/90 to-cyan-400/90 hover:from-purple-600 hover:to-cyan-500 active:translate-x-px active:translate-y-px active:shadow-none'
               }`}
           >
             {loading ? 'LOGGING IN...' : 'LOG IN'}
           </button>
         </form>
 
-        {/* Link to register page from fe-aliya */}
-        <div className="mt-6 text-center text-xs font-['Radio_Canada']">
-          <span className="text-stone-500">Don't have an account? </span>
-          <Link to="/register" className="text-purple-500 font-bold hover:underline">
+        <div className="mt-6 text-center text-sm font-mono">
+          <span className="text-neutral-700">Don't have an account? </span>
+          <Link to="/register" className="text-purple-500 font-bold hover:underline uppercase">
             REGISTER
           </Link>
         </div>
       </div>
-      {/* Add master's fade-in animation style if not globally defined */}
-      <style jsx global>{` 
-        .animate-fade-in-up {
-          animation: fade-in-up 0.5s ease-out forwards;
-        }
-        @keyframes fade-in-up {
-          0% {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+      {/* Removed <style jsx global> as animations should be in global CSS if needed widely */}
     </div>
   );
 };
