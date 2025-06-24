@@ -20,17 +20,6 @@ const moodController = require('./src/controllers/moodController');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware with explicit CORS configuration
-app.use(cors({
-  origin: [
-    'https://moodmori.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 
 app.use(express.json({ limit: '10mb' })); // Increase payload limit for base64 images
 
