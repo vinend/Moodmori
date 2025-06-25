@@ -21,17 +21,27 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 
+// CORS configuration for production
+app.use(cors({
+  origin: 'https://moodmori.vercel.app', // Allow the frontend to access the backend
+  credentials: true // Allow cookies to be sent
+}));
+
 app.use(express.json({ limit: '10mb' })); // Increase payload limit for base64 images
+
+// Trust the Vercel proxy
+app.set('trust proxy', 1);
 
 // Session middleware for simple authentication
 app.use(session({
   secret: process.env.SESSION_SECRET || 'omori-mood-logger-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production', 
+  cookie: {
+    secure: true, // Must be true for SameSite=None
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'none' // Required for cross-domain cookies
   }
 }));
 
