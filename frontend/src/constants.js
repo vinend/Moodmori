@@ -1,5 +1,5 @@
 // API URL for backend services
-export const API_URL = 'https://backend-moodmori-nu.vercel.app/';
+export const API_URL = 'https://backend-moodmori.vercel.app/';
 
 // Set this to false to use actual database data
 export const DEMO_MODE = false;
